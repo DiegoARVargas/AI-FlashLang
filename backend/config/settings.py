@@ -88,3 +88,6 @@ AUTH_USER_MODEL = "users.CustomUser"
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+MEDIA_URL = '/media/'   # URL para acceder a archivos multimedia
+MEDIA_ROOT = BASE_DIR / 'media' # Ruta donde se almacenan los archivos multimedia

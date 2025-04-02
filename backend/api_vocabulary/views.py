@@ -1,3 +1,4 @@
+from django.core.files.base import ContentFile  # Módulo para manejar archivos en Django
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -7,6 +8,8 @@ from openai import OpenAI
 import os
 import re  # Módulo para expresiones regulares para buscar patrones en cadenas de texto
 from deep_translator import GoogleTranslator  # Módulo para traducir texto
+from io import BytesIO # Módulo para manejar flujos de bytes
+from gtts import gTTS  # Módulo para convertir texto a voz
 
 class VocabularyWordViewSet(viewsets.ModelViewSet):
     queryset = VocabularyWord.objects.all()
@@ -122,3 +125,70 @@ class VocabularyWordViewSet(viewsets.ModelViewSet):
                 {"error": f"Error al generar el tipo de palabra: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+    @action(detail=True, methods=["post"])
+    def generate_audio_word(self, request, pk=None):
+        word = self.get_object()
+
+        try:
+            if not word.word:
+                return Response({
+                    "error": "La palabra está vacía. No se puede generar el audio."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Usamos gTTS (requiere conexión a internet)
+            # 🔄 Este método es temporal y será reemplazado por Google Cloud TTS en producción
+            tts = gTTS(text=word.word, lang="en")
+            audio_buffer = BytesIO()
+            tts.write_to_fp(audio_buffer)
+
+            audio_buffer.seek(0)
+
+            filename = f"{word.word}_word.mp3"
+            word.audio_word.save(filename, ContentFile(audio_buffer.read()))
+            word.save()
+
+            return Response({
+                "message": "Audio de la palabra generado correctamente con gTTS.",
+                "filename": filename
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                "error": f"Error al generar el audio de la palabra con gTTS: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=True, methods=["post"])
+    def generate_audio_sentence(self, request, pk=None):
+        word = self.get_object()
+
+        try:
+            # Verificar que haya una frase de ejemplo
+            if not word.example_sentence:
+                return Response({
+                    "error": "La frase de ejemplo (example_sentence) está vacía. Debes generarla primero."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Usamos gTTS (requiere conexión a internet)
+            # 🔄 Esta implementación es temporal para desarrollo local y pruebas.
+            # 🚀 Más adelante será reemplazada por Google Cloud TTS en producción.
+            tts = gTTS(text=word.example_sentence, lang="en")
+            audio_buffer = BytesIO()
+            tts.write_to_fp(audio_buffer)
+
+            # Volver al inicio del buffer para leer el contenido
+            audio_buffer.seek(0)
+
+            filename = f"{word.word}_sentence.mp3"
+            word.audio_sentence.save(filename, ContentFile(audio_buffer.read()))
+            word.save()
+
+            return Response({
+                "message": "Audio de la frase generado correctamente con gTTS.",
+                "filename": filename
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                "error": f"Error al generar el audio con gTTS: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
