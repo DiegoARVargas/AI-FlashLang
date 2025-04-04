@@ -6,9 +6,9 @@ from .models import VocabularyWord
 from .serializers import VocabularyWordSerializer
 from openai import OpenAI
 import os
-import re  # Módulo para expresiones regulares para buscar patrones en cadenas de texto
+import re  # Módulo para expresiones regulares para buscar patrones en cadenas de texto ?
 from deep_translator import GoogleTranslator  # Módulo para traducir texto
-from io import BytesIO # Módulo para manejar flujos de bytes
+from io import BytesIO # Módulo para manejar flujos de bytes ?
 from gtts import gTTS  # Módulo para convertir texto a voz
 
 class VocabularyWordViewSet(viewsets.ModelViewSet):
@@ -37,13 +37,18 @@ class VocabularyWordViewSet(viewsets.ModelViewSet):
     def generate_example(self, request, pk=None):
         word = self.get_object()
 
-        # Recibimos los idiomas del request enviado desde el FRONTEND o se usa valores por defecto
+        # Recibir idiomas del frontend o usar inglés/español por defecto
         source_lang = request.data.get("source_lang", "en")
         target_lang = request.data.get("target_lang", "es")
 
+        # Instrucción mejorada para OpenAI
         prompt = (
-            f"Crea una frase de ejemplo en inglés para la palabra '{word.word}' "
-            f"(tipo de palabra: {word.part_of_speech}) que significa '{word.translation}'."
+            f"Dime qué tipo de palabra es '{word.word}' en inglés (por ejemplo: noun, verb, adjective, etc.) "
+            f"y tradúcela al {target_lang} usando el formato: (abreviación) traducción.\n"
+            f"Luego, genera una frase de ejemplo corta en inglés usando esa palabra en contexto.\n"
+            f"Devuelve la respuesta separada por línea así:\n"
+            f"Traducción: (n) tabla\n"
+            f"Ejemplo: I waxed my surfboard before hitting the waves."
         )
 
         try:
@@ -51,37 +56,40 @@ class VocabularyWordViewSet(viewsets.ModelViewSet):
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "Eres un generador de frases de ejemplo para estudiantes de idiomas."},
+                    {"role": "system", "content": "Eres un asistente para estudiantes que genera vocabulario y frases con contexto."},
                     {"role": "user", "content": prompt}
                 ]
             )
-            generated_sentence = response.choices[0].message.content.strip()
 
-            # Traducir la frase generada automaticamente
-            translated_sentence = GoogleTranslator(source=source_lang, target=target_lang).translate(generated_sentence)
+            # Procesar respuesta de OpenAI
+            content = response.choices[0].message.content.strip()
+            lines = content.splitlines()
 
-            # Traducir la palabra
-            translated_word = GoogleTranslator(source=source_lang, target=target_lang).translate(word.word)
-            
-            # Combinar con el part_of_speech para generar la traducción completa
-            translation_full = f"{word.part_of_speech} {translated_word}"
+            translation_line = next((line for line in lines if line.lower().startswith("traducción:")), "")
+            example_line = next((line for line in lines if line.lower().startswith("ejemplo:")), "")
 
-            # Se guardan los resultados en la base de datos
-            word.example_sentence = generated_sentence
-            word.example_translation = translated_sentence
-            word.translation = translation_full
+            translation = translation_line.replace("Traducción:", "").strip()
+            example_sentence = example_line.replace("Ejemplo:", "").strip()
+
+            # Traducir frase con contexto
+            example_translation = GoogleTranslator(source=source_lang, target=target_lang).translate(text=example_sentence)
+
+            # Guardar en la base de datos
+            word.translation = translation
+            word.example_sentence = example_sentence
+            word.example_translation = example_translation
             word.save()
 
             return Response({
-                "example_sentence": generated_sentence,
-                "example_translation": translated_sentence,
-                "translation": translation_full,
+                "translation": translation,
+                "example_sentence": example_sentence,
+                "example_translation": example_translation,
                 "message": "Frase y traducción generadas correctamente."
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response(
-                {"error": f"Error al generar la frase: {str(e)}"},
+                {"error": f"Error en la generación de la frase: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
