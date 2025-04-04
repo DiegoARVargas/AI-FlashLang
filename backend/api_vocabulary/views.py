@@ -36,19 +36,16 @@ class VocabularyWordViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def generate_example(self, request, pk=None):
         word = self.get_object()
-
-        # Recibir idiomas del frontend o usar inglés/español por defecto
         source_lang = request.data.get("source_lang", "en")
         target_lang = request.data.get("target_lang", "es")
 
-        # Instrucción mejorada para OpenAI
         prompt = (
-            f"Dime qué tipo de palabra es '{word.word}' en inglés (por ejemplo: noun, verb, adjective, etc.) "
-            f"y tradúcela al {target_lang} usando el formato: (abreviación) traducción.\n"
-            f"Luego, genera una frase de ejemplo corta en inglés usando esa palabra en contexto.\n"
-            f"Devuelve la respuesta separada por línea así:\n"
-            f"Traducción: (n) tabla\n"
-            f"Ejemplo: I waxed my surfboard before hitting the waves."
+            f"Para la palabra en inglés '{word.word}', genera:\n"
+            f"1. Una oración de ejemplo (Example sentence).\n"
+            f"2. Una traducción directa en español con tipo gramatical (Translation), en el formato (abreviatura) traducción.\n"
+            f"Ejemplo:\n"
+            f"Example sentence: I borrowed a book from the library.\n"
+            f"Translation: (v.) prestar"
         )
 
         try:
@@ -56,42 +53,49 @@ class VocabularyWordViewSet(viewsets.ModelViewSet):
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "Eres un asistente para estudiantes que genera vocabulario y frases con contexto."},
+                    {"role": "system", "content": "Eres un asistente que ayuda a aprender vocabulario con frases y traducciones."},
                     {"role": "user", "content": prompt}
                 ]
             )
 
-            # Procesar respuesta de OpenAI
             content = response.choices[0].message.content.strip()
-            lines = content.splitlines()
+            lines = content.split('\n')
 
-            translation_line = next((line for line in lines if line.lower().startswith("traducción:")), "")
-            example_line = next((line for line in lines if line.lower().startswith("ejemplo:")), "")
+            example_sentence = ""
+            translation = ""
 
-            translation = translation_line.replace("Traducción:", "").strip()
-            example_sentence = example_line.replace("Ejemplo:", "").strip()
+            for line in lines:
+                if "example sentence" in line.lower():
+                    example_sentence = line.split(":", 1)[-1].strip()
+                elif "translation" in line.lower():
+                    translation = line.split(":", 1)[-1].strip()
 
-            # Traducir frase con contexto
-            example_translation = GoogleTranslator(source=source_lang, target=target_lang).translate(text=example_sentence)
+            if not example_sentence or not translation:
+                return Response({
+                    "error": "No se pudo extraer la oración de ejemplo o la traducción de la respuesta de OpenAI.",
+                    "respuesta_raw": content
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Guardar en la base de datos
-            word.translation = translation
+            # Traducir la oración de ejemplo
+            translated_sentence = GoogleTranslator(source=source_lang, target=target_lang).translate(example_sentence)
+
+            # Guardar en el modelo
             word.example_sentence = example_sentence
-            word.example_translation = example_translation
+            word.example_translation = translated_sentence
+            word.translation = translation
             word.save()
 
             return Response({
                 "translation": translation,
                 "example_sentence": example_sentence,
-                "example_translation": example_translation,
+                "example_translation": translated_sentence,
                 "message": "Frase y traducción generadas correctamente."
-            }, status=status.HTTP_200_OK)
+            })
 
         except Exception as e:
-            return Response(
-                {"error": f"Error en la generación de la frase: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({
+                "error": f"Error al generar la frase: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=["post"])
     def generate_part_of_speech(self, request, pk=None):
