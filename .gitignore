@@ -1,3 +1,9 @@
 requirements.txt
 COMMIT_TEMPLATE.md
 media/
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtualenv
+venv/

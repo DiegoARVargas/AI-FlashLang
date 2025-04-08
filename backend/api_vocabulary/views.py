@@ -176,7 +176,7 @@ class VocabularyWordViewSet(viewsets.ModelViewSet):
 
         try:
             # Verificar que haya una frase de ejemplo
-            if not word.example_sentence:
+            if not word.example_sentence or word.example_sentence.strip() == "":
                 return Response({
                     "error": "La frase de ejemplo (example_sentence) está vacía. Debes generarla primero."
                 }, status=status.HTTP_400_BAD_REQUEST)

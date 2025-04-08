@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt", # Permite manejar autenticación con JWT.
     "api_vocabulary",  # Aplicación principal
     "users",  # Aplicación para gestionar usuarios
+    "django_extensions", # Herramientas adicionales para desarrollo
 ]
 
 MIDDLEWARE = [
