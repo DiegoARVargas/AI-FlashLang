@@ -1,7 +1,13 @@
 from django.db import models
+from django.conf import settings
 
 class VocabularyWord(models.Model):
-    word = models.CharField(max_length=100, unique=True)
+    word = models.CharField(max_length=100, unique=False)   # Palabra en el idioma base
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="vocabulary_words",
+    )
     part_of_speech = models.CharField(max_length=50, blank=True, null=True)  # Ej: noun, verb, adjective
     translation = models.CharField(max_length=255, blank=True, null=True)  # Traducción en español
     example_sentence = models.TextField(blank=True, null=True)  # Frase generada por GPT-4

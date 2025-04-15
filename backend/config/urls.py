@@ -18,10 +18,17 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,    # 🔐 Login con email y password → retorna access + refresh
+    TokenRefreshView        # 🔁 Recibe refresh → devuelve nuevo access
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('api_vocabulary.urls'))
+    path('api/', include('api_vocabulary.urls')),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),  # Login
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # Refresh
+    path('api-auth/', include('rest_framework.urls')),  # 👈 Esto activa el botón de login
 ]
 
 # Esto es necesario para servir archivos de audio en desarrollo

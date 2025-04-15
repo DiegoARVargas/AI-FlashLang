@@ -5,3 +5,4 @@ class VocabularyWordSerializer(serializers.ModelSerializer):
     class Meta:
         model = VocabularyWord
         fields = '__all__'
+        read_only_fields = ['user']

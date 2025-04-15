@@ -1,8 +1,10 @@
 from django.core.files.base import ContentFile  # Módulo para manejar archivos en Django
+from rest_framework.permissions import IsAuthenticated  # Permiso para verificar autenticación
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import VocabularyWord
+from rest_framework import serializers
 from .serializers import VocabularyWordSerializer
 from openai import OpenAI
 import os
@@ -12,8 +14,45 @@ from io import BytesIO # Módulo para manejar flujos de bytes ?
 from gtts import gTTS  # Módulo para convertir texto a voz
 
 class VocabularyWordViewSet(viewsets.ModelViewSet):
-    queryset = VocabularyWord.objects.all()
+    queryset = VocabularyWord.objects.none()    # seteado como .none() porque estamos personalizando dinámicamente con get_queryset()
     serializer_class = VocabularyWordSerializer
+    permission_classes = [IsAuthenticated]  # Solo usuarios autenticados pueden acceder a esta vista
+
+    def get_queryset(self):
+        return VocabularyWord.objects.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        word_text = serializer.validated_data["word"].strip().lower()
+
+        # Verificar si ya la tiene el usuario actual
+        if VocabularyWord.objects.filter(user=self.request.user, word__iexact=word_text).exists():
+            raise serializers.ValidationError({
+                "word": "Esta palabra ya fue creada por ti."
+            })
+
+        # Buscar si existe una palabra completa de otro usuario
+        existing = VocabularyWord.objects.filter(
+            word__iexact=word_text,
+            translation__isnull=False,
+            example_sentence__isnull=False,
+            example_translation__isnull=False,
+            audio_word__isnull=False,
+            audio_sentence__isnull=False,
+        ).exclude(user=self.request.user).first()
+
+        if existing:
+            serializer.save(
+                user=self.request.user,
+                translation=existing.translation,
+                example_sentence=existing.example_sentence,
+                example_translation=existing.example_translation,
+                audio_word=existing.audio_word,
+                audio_sentence=existing.audio_sentence,
+                image_url=existing.image_url,
+            )
+        else:
+            serializer.save(user=self.request.user)
+
 
     # Diccionario de abreviaciones gramaticales
     POS_ABBREVIATIONS = {
