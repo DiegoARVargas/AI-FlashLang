@@ -9,12 +9,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Cargar variables de entorno desde .env
 load_dotenv()
 
-# Configuración de seguridad
-SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-default-key")
-DEBUG = os.getenv("DEBUG", "True") == "True"
+# 🔐 Configuración de seguridad
+# ⚠️ Elimina el valor por defecto para forzar que siempre se defina un SECRET_KEY en producción
+SECRET_KEY = os.getenv("SECRET_KEY")
 
-# Configuración de ALLOWED_HOSTS
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+# 🔐 DEBUG debe estar en False por defecto para prevenir fugas de información
+DEBUG = os.getenv("DEBUG", "False") == "True"
+
+# 🔐 ALLOWED_HOSTS se define por entorno, sin valores por defecto
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -45,7 +48,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],  # ⚠️ Ahora usa BASE_DIR correctamente
+        "DIRS": [BASE_DIR / "templates"],  # ⚠️ Usa BASE_DIR correctamente
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -61,10 +64,13 @@ TEMPLATES = [
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-    )
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",  # ✅ Protege todas las vistas por defecto
+    ),
 }
 
-# Configuración de PostgreSQL desde variables de entorno
+# ✅ Configuración de PostgreSQL desde variables de entorno
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -76,19 +82,36 @@ DATABASES = {
     }
 }
 
-# Configuración de JWT
+# 🔐 Configuración de JWT
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-# Modelo de usuario personalizado
+# ✅ Modelo de usuario personalizado
 AUTH_USER_MODEL = "users.CustomUser"
 
+# ✅ Archivos estáticos y multimedia
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-MEDIA_URL = '/media/'   # URL para acceder a archivos multimedia
-MEDIA_ROOT = BASE_DIR / 'media' # Ruta donde se almacenan los archivos multimedia
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# 🔐 Reforzar seguridad de cookies en producción
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+# SECURE_SSL_REDIRECT = True  # ✅ Descomenta en producción con HTTPS
+
+# 🌐 CORS (para cuando integre el frontend)
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:5173",  # Desarrollo local (Vite)
+#     "https://flashlang.app",  # Producción
+# ]
