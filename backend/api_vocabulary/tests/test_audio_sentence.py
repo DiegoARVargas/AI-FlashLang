@@ -1,12 +1,16 @@
-from rest_framework.test import APITestCase
 from rest_framework import status
-from rest_framework.reverse import reverse # Nos permite construir URLs a partir del nombre de la vista registrada.
+from rest_framework.test import APITestCase
+from django.urls import reverse
+from users.models import CustomUser
 from api_vocabulary.models import VocabularyWord
 
 class GenerateAudioSentenceTest(APITestCase):
     def setUp(self):
+        self.user = CustomUser.objects.create_user(username="audiosentence", password="password", email="audiosentence@example.com")
+        self.client.force_authenticate(user=self.user)
         self.word = VocabularyWord.objects.create(
             word="play",
+            user=self.user,
             example_sentence="The kids play in the park every afternoon."
         )
         self.url = reverse("vocabularyword-generate-audio-sentence", args=[self.word.pk])
