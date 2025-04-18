@@ -1,12 +1,21 @@
-requirements.txt
-COMMIT_TEMPLATE.md
-media/
 # Python
 __pycache__/
 *.py[cod]
 
-# Virtualenv
+# Bytecode compilado
+*.pyo
+*.pyd
+
+# Virtual environment
 venv/
 
-# Environment
+# Entorno de variables
 .env
+
+# Archivos generados
+media/
+staticfiles/
+
+# Archivos de requerimientos y documentación (ya están OK)
+requirements.txt
+COMMIT_TEMPLATE.md
