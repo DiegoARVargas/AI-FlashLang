@@ -1,5 +1,10 @@
 from django.contrib import admin
-from .models import VocabularyWord
+from .models import VocabularyWord, Language
+
+@admin.register(Language)
+class LanguageAdmin(admin.ModelAdmin):
+    list_display = ("code", "name")
+    search_fields = ("code", "name")
 
 @admin.register(VocabularyWord)
 class VocabularyWordAdmin(admin.ModelAdmin):
