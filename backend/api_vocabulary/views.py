@@ -1,11 +1,11 @@
 from django.core.files.base import ContentFile  # Módulo para manejar archivos en Django
-from rest_framework.permissions import IsAuthenticated  # Permiso para verificar autenticación
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly  # Permiso para verificar autenticación
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import VocabularyWord
+from .models import VocabularyWord, Language
 from rest_framework import serializers
-from .serializers import VocabularyWordSerializer
+from .serializers import VocabularyWordSerializer, LanguageSerializer
 from openai import OpenAI
 import os
 import re  # Módulo para expresiones regulares para buscar patrones en cadenas de texto ?
@@ -243,3 +243,8 @@ class VocabularyWordViewSet(viewsets.ModelViewSet):
             return Response({
                 "error": f"Error al generar el audio con gTTS: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class LanguageViewSet(viewsets.ReadOnlyModelViewSet):  # 🔒 Solo lectura por ahora
+    queryset = Language.objects.all()
+    serializer_class = LanguageSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
