@@ -75,13 +75,21 @@ class VocabularyWordViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def generate_example(self, request, pk=None):
         word = self.get_object()
-        source_lang = request.data.get("source_lang", "en")
-        target_lang = request.data.get("target_lang", "es")
+        
+        # Verifica que los idiomas esten definidos
+        if not word.source_lang or not word.target_lang:
+            return Response(
+                {"error": "Faltan los idiomas 'source_lang' o 'target_lang' para esta palabra."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        # Usamos directamente los codigos de idioma del modelo (base de datos)
+        source_lang = word.source_lang.code
+        target_lang = word.target_lang.code
 
         prompt = (
-            f"Para la palabra en inglés '{word.word}', genera:\n"
+            f"Para la palabra en '{source_lang}' '{word.word}', genera:\n"
             f"1. Una oración de ejemplo (Example sentence).\n"
-            f"2. Una traducción directa en español con tipo gramatical (Translation), en el formato (abreviatura) traducción.\n"
+            f"2. Una traducción directa en '{target_lang}' con tipo gramatical (Translation), en el formato (abreviatura) traducción.\n"
             f"Ejemplo:\n"
             f"Example sentence: I borrowed a book from the library.\n"
             f"Translation: (v.) prestar"
@@ -118,7 +126,7 @@ class VocabularyWordViewSet(viewsets.ModelViewSet):
             # Traducir la oración de ejemplo
             translated_sentence = GoogleTranslator(source=source_lang, target=target_lang).translate(example_sentence)
 
-            # Guardar en el modelo
+            # Guardar resultados en el modelo
             word.example_sentence = example_sentence
             word.example_translation = translated_sentence
             word.translation = translation
