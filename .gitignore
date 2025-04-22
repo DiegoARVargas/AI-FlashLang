@@ -12,6 +12,10 @@ venv/
 # Entorno de variables
 .env
 
+# Archivos de entorno personalizados
+.env.production
+.env.development
+
 # Archivos generados
 media/
 staticfiles/
