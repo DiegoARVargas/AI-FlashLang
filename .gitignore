@@ -1,25 +1,45 @@
 # Python
 __pycache__/
 *.py[cod]
-
-# Bytecode compilado
 *.pyo
 *.pyd
 
-# Virtual environment
+# Entornos virtuales
 venv/
 
-# Entorno de variables
+# Variables de entorno
 .env
-
-# Archivos de entorno personalizados
-.env.production
-.env.development
+.env.*
 
 # Archivos generados
 media/
 staticfiles/
+*.sqlite3
+*.db
+*.log
+*.bak
+*.tmp
+
+# Cobertura / tests
+.coverage
+htmlcov/
+*.cover
+nosetests.xml
+coverage.xml
+
+# Docker
+*.tar
+*.pid
+*.sock
+
+# IDEs y sistema
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
 
 # Archivos de requerimientos y documentación (ya están OK)
 requirements.txt
 COMMIT_TEMPLATE.md
+*.md

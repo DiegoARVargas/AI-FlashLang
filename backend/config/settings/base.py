@@ -3,11 +3,11 @@ from pathlib import Path
 from dotenv import load_dotenv
 from datetime import timedelta
 
-# Define la ruta base del proyecto
-BASE_DIR = Path(__file__).resolve().parent.parent
+# 📁 Ruta base del proyecto
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# Cargar variables de entorno desde .env
-load_dotenv()
+# 🔄 Cargar variables de entorno desde el archivo .env activo
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 # 🔐 Configuración de seguridad
 # ⚠️ Elimina el valor por defecto para forzar que siempre se defina un SECRET_KEY en producción
@@ -19,6 +19,7 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 # 🔐 ALLOWED_HOSTS se define por entorno, sin valores por defecto
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
+# ✅ Aplicaciones instaladas
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -33,6 +34,7 @@ INSTALLED_APPS = [
     "django_extensions", # Herramientas adicionales para desarrollo
 ]
 
+# ⚙️ Middleware
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",  # ⚠️ Necesario para el admin
@@ -43,8 +45,10 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# 🌐 Configuración de URLs raíz
 ROOT_URLCONF = "config.urls"
 
+# 🧱 Configuración de templates
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -61,14 +65,8 @@ TEMPLATES = [
     },
 ]
 
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",  # ✅ Protege todas las vistas por defecto
-    ),
-}
+# ⚙️ Configuración WSGI
+WSGI_APPLICATION = "config.wsgi.application"
 
 # ✅ Configuración de PostgreSQL desde variables de entorno
 DATABASES = {
@@ -100,7 +98,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# 🔐 Reforzar seguridad de cookies en producción
+# 🔐 Seguridad para producción (sobrescrito en settings.production.py)
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_BROWSER_XSS_FILTER = True

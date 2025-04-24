@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - ./backend:/app
+    ports:
+    - "${DJANGO_PORT:-8000}:8000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: ai_flashlang_db
+      POSTGRES_USER: iaFlaslang_admin_prod1
+      POSTGRES_PASSWORD: 11flashlang1987@
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+    - "5435:5432"
+
+volumes:
+  postgres_data:

@@ -1,0 +1,27 @@
+# Entornos virtuales
+venv/
+.env
+.env.development
+.env.production
+
+# Bytecode y cachés
+__pycache__/
+*.py[cod]
+
+# Archivos temporales y locales
+*.sqlite3
+*.log
+*.bak
+*.tmp
+
+# Archivos de migración innecesarios (opcional)
+**/migrations/*
+
+# Archivos personales o del sistema
+*.swp
+.DS_Store
+
+# Documentación y archivos auxiliares
+*.md
+*.pdf
+*.zip
