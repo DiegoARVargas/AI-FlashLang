@@ -19,8 +19,8 @@ services:
     image: postgres:13
     environment:
       POSTGRES_DB: ai_flashlang_db
-      POSTGRES_USER: iaFlaslang_admin_prod1
-      POSTGRES_PASSWORD: 11flashlang1987@
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     ports:

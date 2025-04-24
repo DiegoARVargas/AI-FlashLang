@@ -10,6 +10,8 @@ venv/
 # Variables de entorno
 .env
 .env.*
+backend/.env
+backend/.env.*
 
 # Archivos generados
 media/
