@@ -15,7 +15,7 @@ __pycache__/
 *.tmp
 
 # Archivos de migración innecesarios (opcional)
-**/migrations/*
+**/migrations/__pycache__/
 
 # Archivos personales o del sistema
 *.swp
