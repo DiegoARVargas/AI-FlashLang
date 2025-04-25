@@ -20,5 +20,5 @@ COPY . .
 EXPOSE 8000
 
 # Comando por defecto al iniciar el contenedor:
-# Ejecuta collectstatic y luego levanta Gunicorn
-CMD ["/bin/sh", "-c", "python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000"]
+# Aplica migraciones, ejecuta collectstatic y lanza Gunicorn
+CMD ["/bin/sh", "-c", "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000"]
