@@ -1,3 +1,4 @@
+import os
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -15,7 +16,7 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),  # 👈 Esto activa el botón de login
 ]
 
-# ✅ Servir archivos en desarrollo (estáticos + multimedia)
-if settings.DEBUG:
+# ✅ Servir archivos estáticos y multimedia en desarrollo y producción si se detecta que estás en Render
+if settings.DEBUG or os.getenv("RENDER", ""):
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
