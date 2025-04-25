@@ -42,6 +42,5 @@ coverage.xml
 Thumbs.db
 
 # Archivos de requerimientos y documentación (ya están OK)
-requirements.txt
 COMMIT_TEMPLATE.md
 *.md
