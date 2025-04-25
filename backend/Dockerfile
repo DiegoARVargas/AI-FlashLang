@@ -16,9 +16,14 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # Copia el resto del proyecto
 COPY . .
 
-# Expone el puerto que usará Gunicorn
+# Ejecuta collectstatic
+RUN python manage.py collectstatic --noinput
+
+# ✅ Copia archivos estáticos recolectados a carpeta pública de Render
+RUN mkdir -p /public && cp -r /app/staticfiles/* /public/
+
+# Expone el puerto para Gunicorn
 EXPOSE 8000
 
-# Comando por defecto al iniciar el contenedor:
-# Aplica migraciones, ejecuta collectstatic y lanza Gunicorn
-CMD ["/bin/sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000"]
+# Comando por defecto al iniciar el contenedor
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
