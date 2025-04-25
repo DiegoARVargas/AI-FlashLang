@@ -19,8 +19,6 @@ COPY . .
 # Expone el puerto que usará Gunicorn
 EXPOSE 8000
 
-# Ejecuta collectstatic automáticamente en cada build
-RUN python manage.py collectstatic --noinput
-
-# Comando por defecto al iniciar el contenedor
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+# Comando por defecto al iniciar el contenedor:
+# Ejecuta collectstatic y luego levanta Gunicorn
+CMD ["/bin/sh", "-c", "python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000"]
