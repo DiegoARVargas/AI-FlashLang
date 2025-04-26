@@ -20,7 +20,7 @@ COPY . .
 EXPOSE 8000
 
 # Ejecuta collectstatic
-RUN python manage.py collectstatic --noinput
+#RUN python manage.py collectstatic --noinput
 
 # 🔎 Agrega este comando temporal para inspeccionar
 RUN ls -lR /app/staticfiles/
