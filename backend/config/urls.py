@@ -13,10 +13,10 @@ urlpatterns = [
     path('api/', include('api_vocabulary.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),  # Login
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # Refresh
-    path('api-auth/', include('rest_framework.urls')),  # 👈 Esto activa el botón de login
+    path('api-auth/', include('rest_framework.urls')),  # 👈 Esto activa el botón de login en DRF
 ]
 
-# ✅ Servir archivos estáticos y multimedia en desarrollo y producción si se detecta que estás en Render
-if settings.DEBUG or os.getenv("RENDER", ""):
+# ✅ Servir archivos estáticos y multimedia tanto en desarrollo como en Render (producción)
+if settings.DEBUG or os.getenv("RENDER") == "true":
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
