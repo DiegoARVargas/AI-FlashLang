@@ -4,7 +4,7 @@ FROM python:3.12-slim
 # Establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Instala dependencias del sistema necesarias (como PostgreSQL)
+# Instala dependencias del sistema necesarias
 RUN apt-get update && apt-get install -y gcc libpq-dev && rm -rf /var/lib/apt/lists/*
 
 # Copia los requerimientos primero para aprovechar la caché
@@ -16,14 +16,10 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # Copia el resto del proyecto
 COPY . .
 
-# Ejecuta collectstatic
-RUN python manage.py collectstatic --noinput
-
-# ✅ Copia archivos estáticos recolectados a carpeta pública de Render
-RUN mkdir -p /public && cp -r /app/staticfiles/* /public/
-
-# Expone el puerto para Gunicorn
+# Expone el puerto que usará Gunicorn
 EXPOSE 8000
 
-# Comando por defecto al iniciar el contenedor
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+# Comando por defecto al iniciar el contenedor:
+# 1. Ejecuta collectstatic (para cargar archivos estáticos).
+# 2. Inicia Gunicorn para servir la aplicación.
+CMD python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000
