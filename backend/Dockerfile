@@ -19,8 +19,8 @@ COPY . .
 # Expone el puerto que usará Gunicorn
 EXPOSE 8000
 
-# 🔎 Inspección opcional (puedes dejarlo)
+# 🔎 (Opcional) Inspección de archivos estáticos
 RUN ls -lR /app/staticfiles/
 
-# 🔥 Arranca: crea superuser + gunicorn
-CMD python manage.py shell -c "from users.models import CustomUser; CustomUser.objects.create_superuser('admin', 'admin@gmail.com', 'admin123456789')" && gunicorn config.wsgi:application --bind 0.0.0.0:8000
+# 🔥 Arranca Gunicorn normalmente
+CMD gunicorn config.wsgi:application --bind 0.0.0.0:8000
