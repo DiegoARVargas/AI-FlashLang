@@ -19,16 +19,8 @@ COPY . .
 # Expone el puerto que usará Gunicorn
 EXPOSE 8000
 
-# Ejecuta collectstatic
-#RUN python manage.py collectstatic --noinput
-
-# 🔎 Agrega este comando temporal para inspeccionar
+# 🔎 Inspección opcional (puedes dejarlo)
 RUN ls -lR /app/staticfiles/
 
-# Arranca Gunicorn
-CMD gunicorn config.wsgi:application --bind 0.0.0.0:8000
-
-# Comando por defecto al iniciar el contenedor:
-# 1. Ejecuta collectstatic (para cargar archivos estáticos).
-# 2. Inicia Gunicorn para servir la aplicación.
-#CMD python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000
+# 🔥 Arranca: crea superuser + gunicorn
+CMD python manage.py shell -c "from users.models import CustomUser; CustomUser.objects.create_superuser('admin', 'admin@gmail.com', 'admin123456789')" && gunicorn config.wsgi:application --bind 0.0.0.0:8000
