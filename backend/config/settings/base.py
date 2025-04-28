@@ -37,6 +37,7 @@ INSTALLED_APPS = [
 # ⚙️ Middleware
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # ⚠️ Para servir archivos estáticos en producción
     "django.contrib.sessions.middleware.SessionMiddleware",  # ⚠️ Necesario para el admin
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
