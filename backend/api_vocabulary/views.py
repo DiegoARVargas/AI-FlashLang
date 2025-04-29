@@ -12,6 +12,7 @@ import re  # Módulo para expresiones regulares para buscar patrones en cadenas 
 from deep_translator import GoogleTranslator  # Módulo para traducir texto
 from io import BytesIO # Módulo para manejar flujos de bytes ?
 from gtts import gTTS  # Módulo para convertir texto a voz
+from .audio_utils import generate_audio_for_word, generate_audio_for_example
 
 class VocabularyWordViewSet(viewsets.ModelViewSet):
     queryset = VocabularyWord.objects.none()    # seteado como .none() porque estamos personalizando dinámicamente con get_queryset()
@@ -184,7 +185,7 @@ class VocabularyWordViewSet(viewsets.ModelViewSet):
                 {"error": f"Error al generar el tipo de palabra: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
+    '''    
     @action(detail=True, methods=["post"])
     def generate_audio_word(self, request, pk=None):
         word = self.get_object()
@@ -216,7 +217,25 @@ class VocabularyWordViewSet(viewsets.ModelViewSet):
             return Response({
                 "error": f"Error al generar el audio de la palabra con gTTS: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    '''
+    @action(detail=True, methods=["post"])
+    def generate_audio_word(self, request, pk=None):
+        word = self.get_object()
+
+        if not word.word:
+            return Response({
+                "error": "La palabra está vacía. No se puede generar el audio."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # ✏️ TEMPORAL PARA PRUEBAS: Genera automáticamente el audio MP3 de la palabra en /media/audio/
+        # Este bloque será reemplazado por Google Cloud TTS en producción real.
+        generate_audio_for_word(word)
+
+        return Response({
+            "message": "Audio de la palabra generado correctamente con gTTS."
+        })
     
+    '''
     @action(detail=True, methods=["post"])
     def generate_audio_sentence(self, request, pk=None):
         word = self.get_object()
@@ -251,7 +270,24 @@ class VocabularyWordViewSet(viewsets.ModelViewSet):
             return Response({
                 "error": f"Error al generar el audio con gTTS: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+    '''
+    @action(detail=True, methods=["post"])
+    def generate_audio_sentence(self, request, pk=None):
+        word = self.get_object()
+
+        if not word.example_sentence:
+            return Response({
+                "error": "La frase de ejemplo está vacía. No se puede generar el audio."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # ✏️ TEMPORAL PARA PRUEBAS: Genera automáticamente el audio MP3 del ejemplo en /media/audio/
+        # Este bloque será reemplazado por Google Cloud TTS en producción real.
+        generate_audio_for_example(word)
+
+        return Response({
+            "message": "Audio de la frase generado correctamente con gTTS."
+        })
+    
 class LanguageViewSet(viewsets.ReadOnlyModelViewSet):  # 🔒 Solo lectura por ahora
     queryset = Language.objects.all()
     serializer_class = LanguageSerializer
