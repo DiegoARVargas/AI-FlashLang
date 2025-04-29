@@ -1,3 +1,4 @@
+from django.http import FileResponse    # Módulo para manejar respuestas de archivos (sera temporal)
 from django.core.files.base import ContentFile  # Módulo para manejar archivos en Django
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly  # Permiso para verificar autenticación
 from rest_framework import viewsets, status
@@ -287,6 +288,27 @@ class VocabularyWordViewSet(viewsets.ModelViewSet):
         return Response({
             "message": "Audio de la frase generado correctamente con gTTS."
         })
+    
+    # Endpoint temporal para descargar el audio de la palabra
+    @action(detail=True, methods=["get"])
+    def download_audio_word(self, request, pk=None):
+        word = self.get_object()
+        if not word.audio_word:
+            return Response({"error": "Este vocabulario no tiene audio generado aún."}, status=404)
+
+        # ⛔️ TEMPORAL – eliminar en producción real cuando se use AWS S3
+        return FileResponse(word.audio_word.open(), content_type='audio/mpeg')
+
+
+    # Endpoint temporal para descargar el audio de la oración
+    @action(detail=True, methods=["get"])
+    def download_audio_sentence(self, request, pk=None):
+        word = self.get_object()
+        if not word.audio_sentence:
+            return Response({"error": "Este vocabulario no tiene audio de oración aún."}, status=404)
+
+        # ⛔️ TEMPORAL – eliminar en producción real cuando se use AWS S3
+        return FileResponse(word.audio_sentence.open(), content_type='audio/mpeg')
     
 class LanguageViewSet(viewsets.ReadOnlyModelViewSet):  # 🔒 Solo lectura por ahora
     queryset = Language.objects.all()
