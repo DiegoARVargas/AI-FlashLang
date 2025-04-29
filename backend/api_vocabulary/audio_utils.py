@@ -1,46 +1,43 @@
-import os
-from io import BytesIO
+# audio_utils.py
+# Utilidades para generar audios con gTTS
+# 🔄 Este módulo es temporal y será reemplazado por Google Cloud TTS en producción
+
 from gtts import gTTS
+from io import BytesIO
 from django.core.files.base import ContentFile
+from .models import VocabularyWord  # Necesario para acceder a source_lang y target_lang dinámicamente
 
-# 📁 Ruta donde se guardarán los audios en desarrollo y pruebas
-# Django usará MEDIA_ROOT/audio/
-AUDIO_DIR = "audio/"
-
-def generate_audio_for_word(word_obj):
+def generate_gtts_audio_for_word(word: VocabularyWord):
     """
-    Genera un archivo de audio MP3 para la palabra (`word_obj.word`) usando gTTS.
-    El archivo se guarda en word_obj.audio_word.
+    Genera el audio de una palabra utilizando gTTS.
+    Usa el idioma definido por source_lang.code del usuario.
     """
-    try:
-        tts = gTTS(text=word_obj.word, lang="en")
-        buffer = BytesIO()
-        tts.write_to_fp(buffer)
-        buffer.seek(0)
+    lang_code = word.source_lang.code if word.source_lang else "en"
 
-        filename = f"{word_obj.word}_word.mp3"
-        word_obj.audio_word.save(filename, ContentFile(buffer.read()))
-        word_obj.save()
+    tts = gTTS(text=word.word, lang=lang_code)
+    audio_buffer = BytesIO()
+    tts.write_to_fp(audio_buffer)
+    audio_buffer.seek(0)
 
-    except Exception as e:
-        raise Exception(f"Error al generar el audio de la palabra: {str(e)}")
+    filename = f"{word.word}_word.mp3"
+    word.audio_word.save(filename, ContentFile(audio_buffer.read()))
+    word.save()
 
-def generate_audio_for_example(word_obj):
+    return filename
+
+def generate_gtts_audio_for_sentence(word: VocabularyWord):
     """
-    Genera un archivo de audio MP3 para la frase de ejemplo (`word_obj.example_sentence`) usando gTTS.
-    El archivo se guarda en word_obj.audio_sentence.
+    Genera el audio de la frase de ejemplo usando el idioma de origen seleccionado por el usuario.
     """
-    try:
-        tts = gTTS(text=word_obj.example_sentence, lang="en")
-        buffer = BytesIO()
-        tts.write_to_fp(buffer)
-        buffer.seek(0)
+    lang_code = word.source_lang.code if word.source_lang else "en"
 
-        filename = f"{word_obj.word}_sentence.mp3"
-        word_obj.audio_sentence.save(filename, ContentFile(buffer.read()))
-        word_obj.save()
+    tts = gTTS(text=word.example_sentence, lang=lang_code)
+    audio_buffer = BytesIO()
+    tts.write_to_fp(audio_buffer)
+    audio_buffer.seek(0)
 
-    except Exception as e:
-        raise Exception(f"Error al generar el audio del ejemplo: {str(e)}")
+    filename = f"{word.word}_sentence.mp3"
+    word.audio_sentence.save(filename, ContentFile(audio_buffer.read()))
+    word.save()
 
-# ⚠️ Este script es temporal. Será eliminado al migrar a almacenamiento externo (AWS S3).
+    return filename
