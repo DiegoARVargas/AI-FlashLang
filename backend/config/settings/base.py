@@ -88,6 +88,18 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",  # 🔐 Autenticación basada en tokens JWT
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",  # 🔒 Obliga a estar autenticado por defecto
+    ),
+    "DEFAULT_RENDERER_CLASSES": (
+        "rest_framework.renderers.JSONRenderer",  # 🧾 Solo respuestas en formato JSON
+    )
+}
+
 # ✅ Modelo de usuario personalizado
 AUTH_USER_MODEL = "users.CustomUser"
 
