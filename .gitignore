@@ -12,6 +12,7 @@ venv/
 .env.*
 backend/.env
 backend/.env.*
+frontend/.env.local
 
 # Archivos generados
 media/

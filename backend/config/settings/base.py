@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "api_vocabulary",  # Aplicación principal
     "users",  # Aplicación para gestionar usuarios
     "django_extensions", # Herramientas adicionales para desarrollo
+    'corsheaders',  # Para manejar CORS
 ]
 
 # ⚙️ Middleware
@@ -39,6 +40,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # ⚠️ Para servir archivos estáticos en producción
     "django.contrib.sessions.middleware.SessionMiddleware",  # ⚠️ Necesario para el admin
+    'corsheaders.middleware.CorsMiddleware',  # ⚠️ Para manejar CORS
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",  # ⚠️ Necesario para autenticación
@@ -50,7 +52,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = "config.urls"
 
 # 🧱 Configuración de templates
-TEMPLATES = [
+TEMPLATES = [Puedes usar esto 
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [BASE_DIR / "templates"],  # ⚠️ Usa BASE_DIR correctamente
@@ -120,6 +122,9 @@ SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 # SECURE_SSL_REDIRECT = True  # ✅ Descomenta en producción con HTTPS
+
+# temporalmente para pruebas
+CORS_ALLOW_ALL_ORIGINS = True
 
 # 🌐 CORS (para cuando integre el frontend)
 # CORS_ALLOWED_ORIGINS = [
