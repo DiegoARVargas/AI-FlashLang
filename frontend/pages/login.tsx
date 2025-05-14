@@ -1,25 +1,26 @@
-// pages/login.tsx
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import api from '../services/api';
 import Cookies from 'js-cookie';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
-
-  // ✅ CAMBIO: Renombrar 'email' a 'username'
-  const [username, setUsername] = useState(''); // ✅ CAMBIO
+  const { login } = useAuth();
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // ✅ CAMBIO: Enviar 'username' en vez de 'email'
-      const response = await api.post('/token/', { username, password }); // ✅ CAMBIO
+      const response = await api.post('/token/', { username, password });
       Cookies.set('access_token', response.data.access);
       Cookies.set('refresh_token', response.data.refresh);
-      router.push('/');
+      login(response.data.access); // ✅ Actualiza el contexto
+
+      console.log('✅ Redirecting...');
+      router.push('/'); // ✅ Redirige tras login exitoso
     } catch (error) {
       setErrorMsg('Invalid credentials. Please try again.');
     }
@@ -34,9 +35,9 @@ export default function LoginPage() {
 
         <input
           type="text"
-          placeholder="Username" // ✅ CAMBIO: placeholder más claro
-          value={username}       // ✅ CAMBIO
-          onChange={(e) => setUsername(e.target.value)} // ✅ CAMBIO
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           className="w-full px-4 py-2 mb-4 border rounded"
           required
         />
