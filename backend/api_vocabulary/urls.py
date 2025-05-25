@@ -1,11 +1,12 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path, include
-from .views import VocabularyWordViewSet, LanguageViewSet
+from .views import UserVocabularyWordViewSet, LanguageViewSet, GenerateAudioView
 
 router = DefaultRouter()
-router.register(r'vocabulary', VocabularyWordViewSet, basename="vocabulary")
+router.register(r'vocabulary', UserVocabularyWordViewSet, basename="vocabulary")
 router.register(r'languages', LanguageViewSet, basename="language")
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('generate-audio/', GenerateAudioView.as_view(), name='generate-audio'),
 ]

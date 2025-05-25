@@ -33,7 +33,7 @@ class UserVocabularyWord(models.Model):
     )
     shared_word = models.ForeignKey(
         SharedVocabularyWord,
-        on_delete=models.SET_NCustomWordContentULL,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="user_words"

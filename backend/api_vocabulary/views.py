@@ -1,72 +1,89 @@
-from django.http import FileResponse    # Módulo para manejar respuestas de archivos (sera temporal)
-from django.core.files.base import ContentFile  # Módulo para manejar archivos en Django
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly  # Permiso para verificar autenticación
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework import viewsets, status, serializers
 from rest_framework.response import Response
-from .models import VocabularyWord, Language
-from rest_framework import serializers
-from .serializers import VocabularyWordSerializer, LanguageSerializer
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from .models import UserVocabularyWord, SharedVocabularyWord, CustomWordContent, Language
+from .serializers import UserVocabularyWordSerializer, LanguageSerializer
+from django.db import IntegrityError
 from openai import OpenAI
 import os
-import re  # Módulo para expresiones regulares para buscar patrones en cadenas de texto ?
-from deep_translator import GoogleTranslator  # Módulo para traducir texto
-from io import BytesIO # Módulo para manejar flujos de bytes ?
-from gtts import gTTS  # Módulo para convertir texto a voz
+import re
+from deep_translator import GoogleTranslator
 from .audio_utils import generate_gtts_audio_for_word, generate_gtts_audio_for_sentence
 
-class VocabularyWordViewSet(viewsets.ModelViewSet):
-    queryset = VocabularyWord.objects.none()    # seteado como .none() porque estamos personalizando dinámicamente con get_queryset()
-    serializer_class = VocabularyWordSerializer
-    permission_classes = [IsAuthenticated]  # Solo usuarios autenticados pueden acceder a esta vista
+
+class LanguageViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Language.objects.all()
+    serializer_class = LanguageSerializer
+
+class UserVocabularyWordViewSet(viewsets.ModelViewSet):
+    queryset = UserVocabularyWord.objects.none()
+    serializer_class = UserVocabularyWordSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return VocabularyWord.objects.filter(user=self.request.user)
-    
+        return UserVocabularyWord.objects.filter(user=self.request.user)
+
     def perform_create(self, serializer):
-        word_text = serializer.validated_data["word"].strip().lower()
+        validated = serializer.validated_data
+        user = self.request.user
 
-        # Verificar si ya la tiene el usuario actual
-        if VocabularyWord.objects.filter(user=self.request.user, word__iexact=word_text).exists():
-            raise serializers.ValidationError({
-                "word": "Esta palabra ya fue creada por ti."
-            })
+        word = validated.get("word")
+        source_lang = validated.get("source_lang")
+        target_lang = validated.get("target_lang")
+        context = validated.get("context", None)
 
-        # Buscar si existe una palabra completa de otro usuario
-        existing = VocabularyWord.objects.filter(
-            word__iexact=word_text,
-            translation__isnull=False,
-            example_sentence__isnull=False,
-            example_translation__isnull=False,
-            audio_word__isnull=False,
-            audio_sentence__isnull=False,
-        ).exclude(user=self.request.user).first()
+        if not word or not source_lang or not target_lang:
+            raise serializers.ValidationError({"error": "Faltan campos obligatorios: 'word', 'source_lang' o 'target_lang'."})
 
-        if existing:
-            serializer.save(
-                user=self.request.user,
-                translation=existing.translation,
-                example_sentence=existing.example_sentence,
-                example_translation=existing.example_translation,
-                audio_word=existing.audio_word,
-                audio_sentence=existing.audio_sentence,
-                image_url=existing.image_url,
+        word = word.strip().lower()
+
+        # 🧠 Premium: con contexto → flujo Custom
+        if context:
+            # Verifica si ya existe este custom exacto
+            if CustomWordContent.objects.filter(
+                word=word,
+                source_lang=source_lang,
+                target_lang=target_lang,
+                context=context.strip()
+            ).exists():
+                raise serializers.ValidationError({
+                    "word": "Ya existe una palabra personalizada con ese contexto."
+                })
+
+            # Crear y generar contenido
+            custom = CustomWordContent.objects.create(
+                word=word,
+                source_lang=source_lang,
+                target_lang=target_lang,
+                context=context.strip()
             )
+            self.generate_content_for_custom(custom)
+            serializer.save(user=user, custom_content=custom)
+
         else:
-            serializer.save(user=self.request.user)
+            # 🔄 Reutilizable: flujo compartido (Shared)
+            shared = SharedVocabularyWord.objects.filter(
+                word=word,
+                source_lang=source_lang,
+                target_lang=target_lang
+            ).first()
 
+            if not shared:
+                shared = SharedVocabularyWord.objects.create(
+                    word=word,
+                    source_lang=source_lang,
+                    target_lang=target_lang
+                )
+                self.generate_content_for_shared(shared)
 
-    # Diccionario de abreviaciones gramaticales
-    POS_ABBREVIATIONS = {
-        "noun": "(n)",
-        "verb": "(v.)",
-        "adjective": "(adj.)",
-        "adverb": "(adv.)",
-        "pronoun": "(pron.)",
-        "preposition": "(prep.)",
-        "conjunction": "(conj.)",
-        "interjection": "(interj.)"
-    }
+            # Verifica si el usuario ya la tiene
+            if UserVocabularyWord.objects.filter(user=user, shared_word=shared).exists():
+                raise serializers.ValidationError({
+                    "word": "Ya tienes esta palabra en tu lista."
+                })
+
+            serializer.save(user=user, shared_word=shared)
 
     def get_openai_client(self):
         api_key = os.getenv("OPENAI_API_KEY")
@@ -74,244 +91,102 @@ class VocabularyWordViewSet(viewsets.ModelViewSet):
             raise Exception("La API Key de OpenAI no está definida en las variables de entorno.")
         return OpenAI(api_key=api_key)
 
-    @action(detail=True, methods=["post"])
-    def generate_example(self, request, pk=None):
-        word = self.get_object()
-        
-        # Verifica que los idiomas esten definidos
-        if not word.source_lang or not word.target_lang:
-            return Response(
-                {"error": "Faltan los idiomas 'source_lang' o 'target_lang' para esta palabra."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        # Usamos directamente los codigos de idioma del modelo (base de datos)
-        source_lang = word.source_lang.code
-        target_lang = word.target_lang.code
-
+    def generate_content_for_shared(self, shared):
         prompt = (
-            f"Para la palabra en '{source_lang}' '{word.word}', genera:\n"
-            f"1. Una oración de ejemplo (Example sentence).\n"
-            f"2. Una traducción directa en '{target_lang}' con tipo gramatical (Translation), en el formato (abreviatura) traducción.\n"
-            f"Ejemplo:\n"
-            f"Example sentence: I borrowed a book from the library.\n"
-            f"Translation: (v.) prestar"
+            f"For the word '{shared.word}' in language '{shared.source_lang.code}', generate the following ONLY in English:\n"
+            f"1. An example sentence using the word (start with 'Example sentence:')\n"
+            f"2. A translation to '{shared.target_lang.code}' in the format: (v.) translate "
+            f"(start with 'Translation:')\n"
+            f"Always respond in English only."
         )
 
-        try:
-            client = self.get_openai_client()
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "Eres un asistente que ayuda a aprender vocabulario con frases y traducciones."},
-                    {"role": "user", "content": prompt}
-                ]
-            )
-
-            content = response.choices[0].message.content.strip()
-            lines = content.split('\n')
-
-            example_sentence = ""
-            translation = ""
-
-            for line in lines:
-                if "example sentence" in line.lower():
-                    example_sentence = line.split(":", 1)[-1].strip()
-                elif "translation" in line.lower():
-                    translation = line.split(":", 1)[-1].strip()
-
-            if not example_sentence or not translation:
-                return Response({
-                    "error": "No se pudo extraer la oración de ejemplo o la traducción de la respuesta de OpenAI.",
-                    "respuesta_raw": content
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Traducir la oración de ejemplo
-            translated_sentence = GoogleTranslator(source=source_lang, target=target_lang).translate(example_sentence)
-
-            # Guardar resultados en el modelo
-            word.example_sentence = example_sentence
-            word.example_translation = translated_sentence
-            word.translation = translation
-            word.save()
-
-            return Response({
-                "translation": translation,
-                "example_sentence": example_sentence,
-                "example_translation": translated_sentence,
-                "message": "Frase y traducción generadas correctamente."
-            })
-
-        except Exception as e:
-            return Response({
-                "error": f"Error al generar la frase: {str(e)}"
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    @action(detail=True, methods=["post"])
-    def generate_part_of_speech(self, request, pk=None):
-        word = self.get_object()
-
-        prompt = (
-            f"¿Qué tipo de palabra (por ejemplo, noun, verb, adjective, adverb, etc.) "
-            f"es '{word.word}' en inglés? Responde solo con una palabra en inglés."
+        client = self.get_openai_client()
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Eres un asistente que ayuda a aprender vocabulario con frases y traducciones."},
+                {"role": "user", "content": prompt}
+            ]
         )
 
-        try:
-            client = self.get_openai_client()
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "Eres un asistente lingüístico que identifica tipos gramaticales."},
-                    {"role": "user", "content": prompt}
-                ]
-            )
+        content = response.choices[0].message.content.strip()
+        example_sentence, translation = self.extract_response_data(content)
 
-            raw_result = response.choices[0].message.content.strip().lower()
-            match = re.search(
-                r"\b(noun|verb|adjective|adverb|pronoun|preposition|conjunction|interjection)\b", raw_result
-            )
-            result = match.group(1) if match else None
-            abbreviation = self.POS_ABBREVIATIONS.get(result, "(?)")
+        if not example_sentence or not translation:
+            raise Exception(f"No se pudo extraer contenido de OpenAI. Respuesta: {content}")
 
-            word.part_of_speech = abbreviation
-            word.save()
+        translated_sentence = GoogleTranslator(
+            source=shared.source_lang.code,
+            target=shared.target_lang.code
+        ).translate(example_sentence)
 
-            return Response({
-                "part_of_speech": abbreviation,
-                "original": result or raw_result,
-                "message": "Tipo de palabra generado correctamente."
-            }, status=status.HTTP_200_OK)
+        shared.translation = translation
+        shared.example_sentence = example_sentence
+        shared.example_translation = translated_sentence
 
-        except Exception as e:
-            return Response(
-                {"error": f"Error al generar el tipo de palabra: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        # Generar audios
+        generate_gtts_audio_for_word(shared)
+        generate_gtts_audio_for_sentence(shared)
+        shared.save()
+
+    def generate_content_for_custom(self, custom):
+        prompt = (
+            f"Genera un ejemplo para la palabra '{custom.word}' en el idioma '{custom.source_lang.code}' "
+            f"usándola en el contexto de '{custom.context}', y genera también su traducción en el idioma "
+            f"'{custom.target_lang.code}' con tipo gramatical en formato (abreviación) traducción.\n"
+            f"1. Oración de ejemplo\n"
+            f"2. Traducción con tipo gramatical."
+        )
+
+        client = self.get_openai_client()
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Eres un asistente de vocabulario."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        content = response.choices[0].message.content.strip()
+        example_sentence, translation = self.extract_response_data(content)
+        translated_sentence = GoogleTranslator(source=custom.source_lang.code, target=custom.target_lang.code).translate(example_sentence)
+
+        custom.translation = translation
+        custom.example_sentence = example_sentence
+        custom.example_translation = translated_sentence
+        generate_gtts_audio_for_word(custom)
+        generate_gtts_audio_for_sentence(custom)
+        custom.save()
+
+    def extract_response_data(self, content):
+        lines = content.split('\n')
+        example_sentence = ""
+        translation = ""
+        for line in lines:
+            if "example sentence" in line.lower():
+                example_sentence = line.split(":", 1)[-1].strip()
+            elif "translation" in line.lower():
+                translation = line.split(":", 1)[-1].strip()
+        return example_sentence, translation
     
-    '''    
-    @action(detail=True, methods=["post"])
-    def generate_audio_word(self, request, pk=None):
-        word = self.get_object()
+class GenerateAudioView(APIView):
+    permission_classes = [IsAuthenticated]
 
-        try:
-            if not word.word:
-                return Response({
-                    "error": "La palabra está vacía. No se puede generar el audio."
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Usamos gTTS (requiere conexión a internet)
-            # 🔄 Este método es temporal y será reemplazado por Google Cloud TTS en producción
-            tts = gTTS(text=word.word, lang="en")
-            audio_buffer = BytesIO()
-            tts.write_to_fp(audio_buffer)
-
-            audio_buffer.seek(0)
-
-            filename = f"{word.word}_word.mp3"
-            word.audio_word.save(filename, ContentFile(audio_buffer.read()))
-            word.save()
-
-            return Response({
-                "message": "Audio de la palabra generado correctamente con gTTS.",
-                "filename": filename
-            }, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response({
-                "error": f"Error al generar el audio de la palabra con gTTS: {str(e)}"
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    '''
-    @action(detail=True, methods=["post"])
-    def generate_audio_word(self, request, pk=None):
-        word = self.get_object()
-
-        if not word.word:
-            return Response({
-                "error": "La palabra está vacía. No se puede generar el audio."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # ✏️ TEMPORAL PARA PRUEBAS: Genera automáticamente el audio MP3 de la palabra en /media/audio/
-        # Este bloque será reemplazado por Google Cloud TTS en producción real.
-        generate_gtts_audio_for_word(word)
-
-        return Response({
-            "message": "Audio de la palabra generado correctamente con gTTS."
-        })
-    
-    '''
-    @action(detail=True, methods=["post"])
-    def generate_audio_sentence(self, request, pk=None):
-        word = self.get_object()
+    def post(self, request, *args, **kwargs):
+        word_id = request.data.get("word_id")
+        if not word_id:
+            return Response({"error": "Se requiere 'word_id'."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Verificar que haya una frase de ejemplo
-            if not word.example_sentence or word.example_sentence.strip() == "":
-                return Response({
-                    "error": "La frase de ejemplo (example_sentence) está vacía. Debes generarla primero."
-                }, status=status.HTTP_400_BAD_REQUEST)
+            user_word = UserVocabularyWord.objects.get(id=word_id, user=request.user)
+        except UserVocabularyWord.DoesNotExist:
+            return Response({"error": "Palabra no encontrada o no pertenece al usuario."}, status=status.HTTP_404_NOT_FOUND)
 
-            # Usamos gTTS (requiere conexión a internet)
-            # 🔄 Esta implementación es temporal para desarrollo local y pruebas.
-            # 🚀 Más adelante será reemplazada por Google Cloud TTS en producción.
-            tts = gTTS(text=word.example_sentence, lang="en")
-            audio_buffer = BytesIO()
-            tts.write_to_fp(audio_buffer)
+        content = user_word.custom_content if user_word.custom_content else user_word.shared_word
 
-            # Volver al inicio del buffer para leer el contenido
-            audio_buffer.seek(0)
-
-            filename = f"{word.word}_sentence.mp3"
-            word.audio_sentence.save(filename, ContentFile(audio_buffer.read()))
-            word.save()
-
-            return Response({
-                "message": "Audio de la frase generado correctamente con gTTS.",
-                "filename": filename
-            }, status=status.HTTP_200_OK)
-
+        try:
+            generate_gtts_audio_for_word(content)
+            generate_gtts_audio_for_sentence(content)
+            content.save()
+            return Response({"message": "Audios generados correctamente."}, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({
-                "error": f"Error al generar el audio con gTTS: {str(e)}"
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    '''
-    @action(detail=True, methods=["post"])
-    def generate_audio_sentence(self, request, pk=None):
-        word = self.get_object()
-
-        if not word.example_sentence:
-            return Response({
-                "error": "La frase de ejemplo está vacía. No se puede generar el audio."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # ✏️ TEMPORAL PARA PRUEBAS: Genera automáticamente el audio MP3 del ejemplo en /media/audio/
-        # Este bloque será reemplazado por Google Cloud TTS en producción real.
-        generate_gtts_audio_for_sentence(word)
-
-        return Response({
-            "message": "Audio de la frase generado correctamente con gTTS."
-        })
-    
-    # Endpoint temporal para descargar el audio de la palabra
-    @action(detail=True, methods=["get"])
-    def download_audio_word(self, request, pk=None):
-        word = self.get_object()
-        if not word.audio_word:
-            return Response({"error": "Este vocabulario no tiene audio generado aún."}, status=404)
-
-        # ⛔️ TEMPORAL – eliminar en producción real cuando se use AWS S3
-        return FileResponse(word.audio_word.open(), content_type='audio/mpeg')
-
-
-    # Endpoint temporal para descargar el audio de la oración
-    @action(detail=True, methods=["get"])
-    def download_audio_sentence(self, request, pk=None):
-        word = self.get_object()
-        if not word.audio_sentence:
-            return Response({"error": "Este vocabulario no tiene audio de oración aún."}, status=404)
-
-        # ⛔️ TEMPORAL – eliminar en producción real cuando se use AWS S3
-        return FileResponse(word.audio_sentence.open(), content_type='audio/mpeg')
-    
-class LanguageViewSet(viewsets.ReadOnlyModelViewSet):  # 🔒 Solo lectura por ahora
-    queryset = Language.objects.all()
-    serializer_class = LanguageSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+            return Response({"error": f"Error al generar audios: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
