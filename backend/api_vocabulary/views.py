@@ -131,11 +131,11 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
 
     def generate_content_for_custom(self, custom):
         prompt = (
-            f"Genera un ejemplo para la palabra '{custom.word}' en el idioma '{custom.source_lang.code}' "
-            f"usándola en el contexto de '{custom.context}', y genera también su traducción en el idioma "
-            f"'{custom.target_lang.code}' con tipo gramatical en formato (abreviación) traducción.\n"
-            f"1. Oración de ejemplo\n"
-            f"2. Traducción con tipo gramatical."
+            f"Para la palabra '{custom.word}' en el idioma '{custom.source_lang.code}', con el contexto '{custom.context}', "
+            f"genera una respuesta en **inglés** que contenga:\n"
+            f"1. Example sentence: Una oración de ejemplo que use la palabra en contexto.\n"
+            f"2. Translation: Su traducción en '{custom.target_lang.code}' incluyendo el tipo gramatical "
+            f"en formato (abreviación) traducción. Por ejemplo: (n) préstamo"
         )
 
         client = self.get_openai_client()
@@ -158,14 +158,31 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
         custom.save()
 
     def extract_response_data(self, content):
-        lines = content.split('\n')
+        """
+        Extrae la oración de ejemplo y la traducción desde el contenido entregado por OpenAI.
+        Limpia símbolos innecesarios y duplicados como '**' o duplicaciones como 'word (v) word'.
+        """
+        lines = content.strip().split("\n")
         example_sentence = ""
         translation = ""
+
         for line in lines:
-            if "example sentence" in line.lower():
+            # Detectar oración de ejemplo
+            if re.search(r"example sentence", line, re.IGNORECASE) or line.strip().startswith("1."):
                 example_sentence = line.split(":", 1)[-1].strip()
-            elif "translation" in line.lower():
+            elif re.search(r"translation", line, re.IGNORECASE) or line.strip().startswith("2."):
                 translation = line.split(":", 1)[-1].strip()
+
+        # Limpieza de símbolos '**'
+        example_sentence = example_sentence.lstrip("* ").strip()
+        translation = translation.lstrip("* ").strip()
+
+        # Limpieza de duplicación como 'ganar (v) ganar'
+        match = re.match(r"^(.+?)\s+\((.*?)\)\s+\1$", translation)
+        if match:
+            root, abbr = match.groups()
+            translation = f"({abbr}) {root}"
+
         return example_sentence, translation
     
 class GenerateAudioView(APIView):
