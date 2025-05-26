@@ -2,6 +2,7 @@ from rest_framework import viewsets, status, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from django.db.models import Q
 from .models import UserVocabularyWord, SharedVocabularyWord, CustomWordContent, Language
 from .serializers import UserVocabularyWordSerializer, LanguageSerializer
 from django.db import IntegrityError
@@ -22,7 +23,22 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return UserVocabularyWord.objects.filter(user=self.request.user)
+        user = self.request.user
+        queryset = UserVocabularyWord.objects.filter(user=user)
+
+        deck = self.request.query_params.get('deck')
+        word = self.request.query_params.get('word')
+
+        if deck:
+            queryset = queryset.filter(deck__iexact=deck)
+
+        if word:
+            queryset = queryset.filter(
+                Q(shared_word__word__icontains=word) |
+                Q(custom_content__word__icontains=word)
+            )
+
+        return queryset
 
     def perform_create(self, serializer):
         validated = serializer.validated_data
@@ -32,6 +48,11 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
         source_lang = validated.get("source_lang")
         target_lang = validated.get("target_lang")
         context = validated.get("context", None)
+
+        if context and not self.request.user.is_premium:
+            raise serializers.ValidationError({
+                "context": "Este campo solo está disponible para usuarios premium."
+            })
 
         if not word or not source_lang or not target_lang:
             raise serializers.ValidationError({"error": "Faltan campos obligatorios: 'word', 'source_lang' o 'target_lang'."})

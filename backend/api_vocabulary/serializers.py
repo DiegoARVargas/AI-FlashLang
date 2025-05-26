@@ -34,23 +34,35 @@ class CustomWordContentSerializer(serializers.ModelSerializer):
 
 
 class UserVocabularyWordSerializer(serializers.ModelSerializer):
-    # Campos auxiliares de entrada
+    # Entrada: campos auxiliares para crear palabras nuevas
     word = serializers.CharField(write_only=True, required=False)
     source_lang = serializers.PrimaryKeyRelatedField(queryset=Language.objects.all(), write_only=True, required=False)
     target_lang = serializers.PrimaryKeyRelatedField(queryset=Language.objects.all(), write_only=True, required=False)
     context = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
-    # 🔧 Marcar shared_word y custom_content como opcionales para que no se exijan prematuramente
-    shared_word = serializers.PrimaryKeyRelatedField(queryset=SharedVocabularyWord.objects.all(), required=False, allow_null=True)
-    custom_content = serializers.PrimaryKeyRelatedField(queryset=CustomWordContent.objects.all(), required=False, allow_null=True)
+    # Entrada: IDs explícitos si ya existen
+    shared_word_id = serializers.PrimaryKeyRelatedField(
+        queryset=SharedVocabularyWord.objects.all(), source="shared_word",
+        write_only=True, required=False, allow_null=True
+    )
+    custom_content_id = serializers.PrimaryKeyRelatedField(
+        queryset=CustomWordContent.objects.all(), source="custom_content",
+        write_only=True, required=False, allow_null=True
+    )
+
+    # Salida: contenido anidado
+    shared_word = SharedVocabularyWordSerializer(read_only=True)
+    custom_content = CustomWordContentSerializer(read_only=True)
 
     class Meta:
         model = UserVocabularyWord
         fields = [
-            "id", "user", "shared_word", "custom_content", "deck", "created_at",
+            "id", "user", "deck", "created_at",
+            "shared_word_id", "custom_content_id",
+            "shared_word", "custom_content",
             "word", "source_lang", "target_lang", "context"
         ]
-        read_only_fields = ["user", "created_at"]
+        read_only_fields = ["user", "created_at", "shared_word", "custom_content"]
 
     def validate(self, attrs):
         word = attrs.get("word")
@@ -82,7 +94,7 @@ class UserVocabularyWordSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        # Eliminar campos auxiliares antes de crear UserVocabularyWord
+        # Eliminar campos auxiliares antes de guardar
         validated_data.pop("word", None)
         validated_data.pop("source_lang", None)
         validated_data.pop("target_lang", None)
