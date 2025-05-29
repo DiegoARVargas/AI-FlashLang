@@ -1,4 +1,6 @@
 from rest_framework import viewsets, status, serializers
+from rest_framework.decorators import action
+from django.http import FileResponse, Http404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -11,6 +13,7 @@ import os
 import re
 from deep_translator import GoogleTranslator
 from .audio_utils import generate_gtts_audio_for_word, generate_gtts_audio_for_sentence
+from .anki_exporter import generate_apkg_for_user
 
 
 class LanguageViewSet(viewsets.ReadOnlyModelViewSet):
@@ -206,6 +209,21 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
 
         return example_sentence, translation
     
+    @action(detail=False, methods=['get'], url_path='download-apkg', permission_classes=[IsAuthenticated])
+    def download_apkg(self, request):
+        user = request.user
+        try:
+            apkg_path = generate_apkg_for_user(user)
+
+            if not os.path.exists(apkg_path):
+                raise Http404("Archivo no encontrado")
+
+            filename = os.path.basename(apkg_path)
+            return FileResponse(open(apkg_path, 'rb'), as_attachment=True, filename=filename)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class GenerateAudioView(APIView):
     permission_classes = [IsAuthenticated]
 
