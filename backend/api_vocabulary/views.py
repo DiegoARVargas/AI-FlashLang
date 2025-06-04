@@ -212,13 +212,11 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='download-apkg', permission_classes=[IsAuthenticated])
     def download_apkg(self, request):
         user = request.user
+        deck_name = request.query_params.get("deck_name", "").strip()  # capturar desde la URL
+
         try:
-            apkg_path = generate_apkg_for_user(user)
-
-            if not os.path.exists(apkg_path):
-                raise Http404("Archivo no encontrado")
-
-            filename = os.path.basename(apkg_path)
+            apkg_path, final_deck_name = generate_apkg_for_user(user, deck_name=deck_name)
+            filename = f"aiflashlang_{final_deck_name}.apkg"
             return FileResponse(open(apkg_path, 'rb'), as_attachment=True, filename=filename)
 
         except Exception as e:

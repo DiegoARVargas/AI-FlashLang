@@ -24,6 +24,33 @@ class SharedVocabularyWord(models.Model):
 
     def __str__(self):
         return f"{self.word} ({self.source_lang} → {self.target_lang})"
+    
+    @property
+    def word_audio_filename(self):
+        return self.audio_word.name.split("/")[-1] if self.audio_word else ""
+
+    @property
+    def example_audio_filename(self):
+        return self.audio_sentence.name.split("/")[-1] if self.audio_sentence else ""
+
+    @property
+    def word_audio_path(self):
+        from django.conf import settings
+        return str(settings.MEDIA_ROOT / self.audio_word.name) if self.audio_word else None
+
+    @property
+    def example_audio_path(self):
+        from django.conf import settings
+        return str(settings.MEDIA_ROOT / self.audio_sentence.name) if self.audio_sentence else None
+
+    @property
+    def image_filename(self):
+        return self.image_url.split("/")[-1] if self.image_url else ""
+
+    @property
+    def image_path(self):
+        from django.conf import settings
+        return str(settings.MEDIA_ROOT / self.image_url) if self.image_url else None
 
 class UserVocabularyWord(models.Model):
     user = models.ForeignKey(
@@ -74,3 +101,30 @@ class CustomWordContent(models.Model):
 
     def __str__(self):
         return f"{self.word} - custom with context"
+    
+    @property
+    def word_audio_filename(self):
+        return self.audio_word.name.split("/")[-1] if self.audio_word else ""
+
+    @property
+    def example_audio_filename(self):
+        return self.audio_sentence.name.split("/")[-1] if self.audio_sentence else ""
+
+    @property
+    def word_audio_path(self):
+        from django.conf import settings
+        return str(settings.MEDIA_ROOT / self.audio_word.name) if self.audio_word else None
+
+    @property
+    def example_audio_path(self):
+        from django.conf import settings
+        return str(settings.MEDIA_ROOT / self.audio_sentence.name) if self.audio_sentence else None
+
+    @property
+    def image_filename(self):
+        return self.image_url.split("/")[-1] if self.image_url else ""
+
+    @property
+    def image_path(self):
+        from django.conf import settings
+        return str(settings.MEDIA_ROOT / self.image_url) if self.image_url else None

@@ -1,19 +1,30 @@
 import os
+import random
 import tempfile
 import genanki
+import hashlib
 from django.conf import settings
 from api_vocabulary.models import UserVocabularyWord
 from api_vocabulary.genanki_utils.model import flashlang_model
 
-
-def generate_apkg_for_user(user):
+def generate_apkg_for_user(user, deck_name=None) -> tuple[str, str]:
     # Obtener palabras del usuario
     user_words = UserVocabularyWord.objects.filter(user=user)
+    
+    # Determinar el nombre del deck a usar
+    if deck_name:
+        user_words = user_words.filter(deck=deck_name)
+        if not user_words.exists():
+            raise ValueError(f"No words found for deck '{deck_name}' for user {user.username}.")
+    else:
+        if not user_words.exists():
+            raise ValueError(f"No words found for user {user.username}.")
+        deck_name = user_words.first().deck or "default"
 
     # Crear mazo y lista de archivos multimedia
     deck = genanki.Deck(
-        deck_id=genanki.uid(),  # ID único por exportación
-        name=f"FlashLang Deck - {user.username}"
+        deck_id=random.randrange(1 << 30, 1 << 31),  # ID aleatorio único compatible con genanki
+        name=f"AIflashLang {deck_name} - {user.username}"
     )
     media_files = []
 
@@ -25,13 +36,15 @@ def generate_apkg_for_user(user):
 
         word_text = source.word
         translation = source.translation or ""
-        sentence_audio_tag = f"[sound:{source.example_audio_filename}]" if source.example_audio_filename else ""
         example = source.example_sentence or ""
         example_translation = source.example_translation or ""
-        word_audio_tag = f"[sound:{source.word_audio_filename}]" if source.word_audio_filename else ""
-        image_tag = f"<img src='{source.image_filename}'>" if source.image_filename else ""
+        word_audio_tag = f"[sound:{source.audio_word.name.split('/')[-1]}]" if source.audio_word else ""
+        sentence_audio_tag = f"[sound:{source.audio_sentence.name.split('/')[-1]}]" if source.audio_sentence else ""
+        image_tag = f"<img src='{source.image_url}'>" if source.image_url else ""
 
         # Crear la nota (tarjeta)
+        unique_key = f"{user.id}-{word_text}-{deck_name}"
+        note_guid = hashlib.sha256(unique_key.encode()).hexdigest()[:16]  # 16-char hash
         note = genanki.Note(
             model=flashlang_model,
             fields=[
@@ -42,14 +55,15 @@ def generate_apkg_for_user(user):
                 word_audio_tag,
                 sentence_audio_tag,
                 image_tag
-            ]
+            ],
+            guid=note_guid
         )
         deck.add_note(note)
 
         # Agregar archivos multimedia si existen
-        for filename in [source.word_audio_path, source.example_audio_path, source.image_path]:
-            if filename and os.path.exists(filename):
-                media_files.append(filename)
+        for f in [source.audio_word, source.audio_sentence]:
+            if f and os.path.exists(f.path):
+                media_files.append(f.path)
 
     # Agregar la imagen de fondo (Flashy)
     flashy_path = os.path.join(settings.MEDIA_ROOT, "anki_assets", "__flashy.png")
@@ -59,8 +73,9 @@ def generate_apkg_for_user(user):
     # Guardar .apkg en carpeta temporal del usuario
     user_folder = os.path.join(settings.MEDIA_ROOT, "generated_apkg", f"user_{user.id}")
     os.makedirs(user_folder, exist_ok=True)
-    output_path = os.path.join(user_folder, "flashlang_deck.apkg")
+    output_filename = f"aiflashlang_{deck_name}.apkg"
+    output_path = os.path.join(user_folder, output_filename)
 
     genanki.Package(deck, media_files=media_files).write_to_file(output_path)
 
-    return output_path
+    return output_path, deck_name
