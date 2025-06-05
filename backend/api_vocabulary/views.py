@@ -209,13 +209,17 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
 
         return example_sentence, translation
     
-    @action(detail=False, methods=['get'], url_path='download-apkg', permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['get', 'post'], url_path='download-apkg', permission_classes=[IsAuthenticated])
     def download_apkg(self, request):
         user = request.user
-        deck_name = request.query_params.get("deck_name", "").strip()  # capturar desde la URL
+        deck_name = request.query_params.get("deck_name", "").strip() or request.data.get("deck_name", "").strip()  # capturar desde la URL
+        ids = request.data.get("ids")
+        
+        if ids and not isinstance(ids, list):
+            return Response({"error": "El campo 'ids' debe ser una lista de enteros."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            apkg_path, final_deck_name = generate_apkg_for_user(user, deck_name=deck_name)
+            apkg_path, final_deck_name = generate_apkg_for_user(user, deck_name=deck_name, ids=ids)
             filename = f"aiflashlang_{final_deck_name}.apkg"
             return FileResponse(open(apkg_path, 'rb'), as_attachment=True, filename=filename)
 

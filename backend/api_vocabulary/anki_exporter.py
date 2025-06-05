@@ -7,19 +7,29 @@ from django.conf import settings
 from api_vocabulary.models import UserVocabularyWord
 from api_vocabulary.genanki_utils.model import flashlang_model
 
-def generate_apkg_for_user(user, deck_name=None) -> tuple[str, str]:
+def generate_apkg_for_user(user, deck_name=None, ids=None) -> tuple[str, str]:
+    """
+    Genera un archivo .apkg para el usuario con audios embebidos.
+
+    - Si se pasan IDs, se exportan solo esas palabras.
+    - Si se pasa deck_name, se filtra por ese deck.
+    - Si no se pasa nada, exporta todas las palabras del usuario.
+    """
     # Obtener palabras del usuario
     user_words = UserVocabularyWord.objects.filter(user=user)
-    
-    # Determinar el nombre del deck a usar
-    if deck_name:
+
+    if ids:
+        user_words = user_words.filter(id__in=ids)
+
+    elif deck_name:
+        # Si se especifica un deck_name, filtrar por ese deck
         user_words = user_words.filter(deck=deck_name)
-        if not user_words.exists():
-            raise ValueError(f"No words found for deck '{deck_name}' for user {user.username}.")
-    else:
-        if not user_words.exists():
-            raise ValueError(f"No words found for user {user.username}.")
-        deck_name = user_words.first().deck or "default"
+
+    if not user_words.exists():
+        raise ValueError(f"No words found for user {user.username}")
+    
+    # Nombre del deck
+    deck_name = deck_name or user_words.first().deck or "default"
 
     # Crear mazo y lista de archivos multimedia
     deck = genanki.Deck(
