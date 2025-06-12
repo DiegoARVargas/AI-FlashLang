@@ -128,3 +128,13 @@ class CustomWordContent(models.Model):
     def image_path(self):
         from django.conf import settings
         return str(settings.MEDIA_ROOT / self.image_url) if self.image_url else None
+    
+class DownloadHistory(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    deck_name = models.CharField(max_length=255)
+    word_ids = models.TextField(help_text="Lista separada por comas de los IDs de palabras exportadas")
+    file_path = models.CharField(max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.deck_name} ({self.created_at})"

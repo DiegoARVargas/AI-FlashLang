@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Language, SharedVocabularyWord, UserVocabularyWord, CustomWordContent
+from .models import Language, SharedVocabularyWord, UserVocabularyWord, CustomWordContent, DownloadHistory
 
 @admin.register(Language)
 class LanguageAdmin(admin.ModelAdmin):
@@ -21,3 +21,9 @@ class UserVocabularyWordAdmin(admin.ModelAdmin):
     list_display = ("user", "deck", "created_at")
     search_fields = ("user__email", "deck")
     list_filter = ("deck", "created_at")
+
+@admin.register(DownloadHistory)
+class DownloadHistoryAdmin(admin.ModelAdmin):
+    list_display = ('user', 'deck_name', 'file_path', 'created_at')
+    search_fields = ('user__username', 'deck_name')
+    list_filter = ('created_at',)
