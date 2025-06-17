@@ -1,59 +1,13 @@
-// pages/index.tsx
-import Image from 'next/image';
-import { useRouter } from 'next/router';
-import { motion } from 'framer-motion';
+import Hero from "@/components/Hero";
+import Image from "next/image";
+import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function Home() {
-  const router = useRouter();
-
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#0a0a0a] to-[#111827] text-white font-sans">
-      {/* Hero section */}
-      <section className="flex flex-col-reverse lg:flex-row items-center justify-between px-6 py-20 max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center lg:text-left max-w-xl"
-        >
-          <h1 className="text-4xl sm:text-6xl font-extrabold mb-6 leading-tight">
-            Aprende Vocabulario con IA
-            <span className="block text-blue-500">de Forma Contextual</span>
-          </h1>
-          <p className="text-lg text-gray-300 mb-8">
-            AI FlashLang crea tarjetas inteligentes a partir de textos reales para mejorar tu fluidez en inglés, francés, portugués y más. Aprende con ejemplos reales, audios, traducciones y mucho más.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-            <button
-              onClick={() => router.push('/login')}
-              className="bg-blue-600 hover:bg-blue-700 transition text-white px-6 py-3 rounded-full font-semibold shadow-lg"
-            >
-              Empieza ahora
-            </button>
-            <button
-              onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
-              className="border border-gray-500 hover:border-white hover:text-white transition px-6 py-3 rounded-full font-semibold text-gray-300"
-            >
-              Ver ventajas
-            </button>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
-          className="mb-10 lg:mb-0"
-        >
-          <Image
-            src="/mascot.png"
-            alt="FlashLang Mascot"
-            width={320}
-            height={320}
-            priority
-          />
-        </motion.div>
-      </section>
+    <main className="min-h-screen bg-black text-white font-sans">
+      {/* Hero con video de Flashy */}
+      <Hero />
 
       {/* Features */}
       <section className="bg-[#1f2937] py-20 px-6">
@@ -85,6 +39,55 @@ export default function Home() {
               </p>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* Ejemplo de tarjeta */}
+      <section className="px-4 py-20 bg-[#120a24]">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-8">Así funciona una tarjeta FlashLang</h2>
+          <div className="flex flex-col md:flex-row justify-center gap-6 items-center">
+            <Image
+              src="/tarjeta_inicial.png"
+              alt="Tarjeta inicial"
+              width={180}
+              height={240}
+              className="rounded-xl shadow-lg"
+            />
+            <Image
+              src="/tarjeta_click.png"
+              alt="Tarjeta click"
+              width={180}
+              height={240}
+              className="rounded-xl shadow-lg"
+            />
+            <Image
+              src="/tarjeta_traduccion.png"
+              alt="Tarjeta traducción"
+              width={180}
+              height={240}
+              className="rounded-xl shadow-lg"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Final */}
+      <section className="bg-[#1f152f] py-20 px-4 text-center">
+        <h2 className="text-3xl font-bold">Empieza a aprender con FlashLang</h2>
+        <p className="text-gray-300 mt-4 mb-6">Conviértete en un maestro del vocabulario con la ayuda de la IA</p>
+        <Link href="/login">
+          <button className="bg-purple-600 hover:bg-purple-700 text-white text-lg px-6 py-3 rounded-full font-semibold shadow-xl">
+            Crear cuenta gratis
+          </button>
+        </Link>
+        <div className="mt-8 flex justify-center">
+          <Image
+            src="/mascot.png"
+            alt="Flashy celebrando"
+            width={160}
+            height={160}
+          />
         </div>
       </section>
 
