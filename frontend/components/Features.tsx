@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 export default function Features() {
   return (
-    <section className="bg-black py-20 px-6">
+    <section className="bg-black py-20 px-6 mt-12">
       <div className="max-w-6xl mx-auto text-center">
         <h2 className="text-3xl font-bold mb-4">¿Por qué aprender con AI FlashLang?</h2>
         <p className="text-gray-400 mb-12">

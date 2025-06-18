@@ -15,9 +15,15 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       const response = await api.post('/token/', { username, password });
+      // ✅ Guarda tokens
       Cookies.set('access_token', response.data.access);
       Cookies.set('refresh_token', response.data.refresh);
-      login(response.data.access); // ✅ Actualiza el contexto
+
+      // ✅ Guarda el username solo si todo fue exitoso
+      Cookies.set('username', username);
+
+      // ✅ Llama a login pasando también el nombre
+      login(response.data.access, username); // ✅ Actualiza el contexto
 
       console.log('✅ Redirecting...');
       router.push('/'); // ✅ Redirige tras login exitoso
