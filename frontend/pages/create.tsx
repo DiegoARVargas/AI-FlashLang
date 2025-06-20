@@ -42,7 +42,9 @@ export default function CreatePage() {
             Authorization: `Bearer ${token}`,
           },
         });
+
         if (!res.ok) throw new Error("Error al cargar lenguajes");
+
         const data = await res.json();
         setLanguages(data);
       } catch (err) {
@@ -72,20 +74,26 @@ export default function CreatePage() {
           deck,
         }),
       });
-
+  
       if (res.status === 401) throw new Error("Token inválido o expirado. Inicia sesión nuevamente.");
-      if (res.status === 403) throw new Error("No tienes permisos para usar esta función (quizás contexto premium?)");
-
+      if (res.status === 403) throw new Error("No tienes permisos para usar esta función (¿quizás contexto premium?)");
+  
       const data = await res.json();
-      const shared = data.shared_word;
+  
+      const content = data.shared_word || data.custom_content;
+  
+      if (!content) {
+        throw new Error("La respuesta del servidor no contiene datos válidos.");
+      }
+  
       setResult({
-        word: shared.word,
-        translation: shared.translation,
-        example_sentence: shared.example_sentence,
-        translated_sentence: shared.example_translation,
-        image_url: shared.image_url,
-        audio_word_url: shared.audio_word,
-        audio_sentence_url: shared.audio_sentence,
+        word: content.word,
+        translation: content.translation,
+        example_sentence: content.example_sentence,
+        translated_sentence: content.example_translation,
+        image_url: content.image_url,
+        audio_word_url: content.audio_word,
+        audio_sentence_url: content.audio_sentence,
       });
     } catch (err: any) {
       setErrorMsg(err.message || "Error al generar palabra.");
@@ -94,77 +102,96 @@ export default function CreatePage() {
       setLoading(false);
     }
   };
+  
+
+  const handleDownload = () => {
+    alert("⚠️ Aquí irá la lógica para descargar el .apkg con la palabra generada.");
+  };
+
+  const handleSave = () => {
+    console.log("✅ Palabra guardada. Acción futura.");
+  };
 
   return (
     <ProtectedRoute>
       <>
         <Navbar />
         <main className="min-h-screen bg-black text-white p-6">
-          <h1 className="text-3xl font-bold mb-6">Crear nueva palabra</h1>
+          <div className="flex flex-col lg:flex-row justify-between gap-12 items-start w-full max-w-7xl mx-auto">
+            {/* Columna izquierda: Formulario */}
+            <div className="w-full lg:w-1/2">
+              <h1 className="text-3xl font-bold mb-6">Crear nueva palabra</h1>
 
-          {errorMsg && (
-            <div className="bg-red-800 text-red-200 p-4 rounded mb-6">
-              {errorMsg}
-            </div>
-          )}
+              {errorMsg && (
+                <div className="bg-red-800 text-red-200 p-4 rounded mb-6">
+                  {errorMsg}
+                </div>
+              )}
 
-          <section className="flex flex-col lg:flex-row gap-12">
-            {/* Formulario */}
-            <div className="space-y-4 w-full lg:w-1/2">
-              <input
-                type="text"
-                placeholder="Enter word"
-                value={word}
-                onChange={(e) => setWord(e.target.value)}
-                className="w-full p-2 rounded bg-neutral-900 border border-neutral-700"
-              />
-
-              <div className="flex gap-4">
-                <select
-                  value={sourceLang}
-                  onChange={(e) => setSourceLang(Number(e.target.value))}
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Enter word"
+                  value={word}
+                  onChange={(e) => setWord(e.target.value)}
                   className="w-full p-2 rounded bg-neutral-900 border border-neutral-700"
-                >
-                  {languages.map((lang) => (
-                    <option key={lang.id} value={lang.id}>
-                      {lang.name}
-                    </option>
-                  ))}
-                </select>
+                />
 
-                <select
-                  value={targetLang}
-                  onChange={(e) => setTargetLang(Number(e.target.value))}
+                <div className="flex gap-4">
+                  <select
+                    value={sourceLang}
+                    onChange={(e) => setSourceLang(Number(e.target.value))}
+                    className="w-full p-2 rounded bg-neutral-900 border border-neutral-700"
+                  >
+                    {languages.map((lang) => (
+                      <option key={lang.id} value={lang.id}>
+                        {lang.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={targetLang}
+                    onChange={(e) => setTargetLang(Number(e.target.value))}
+                    className="w-full p-2 rounded bg-neutral-900 border border-neutral-700"
+                  >
+                    {languages.map((lang) => (
+                      <option key={lang.id} value={lang.id}>
+                        {lang.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <textarea
+                  placeholder="Context (optional, premium only)"
+                  value={context}
+                  onChange={(e) => setContext(e.target.value)}
+                  className="w-full p-2 rounded bg-neutral-900 border border-neutral-700 min-h-[100px]"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Nombre del mazo (deck)"
+                  value={deck}
+                  onChange={(e) => setDeck(e.target.value)}
                   className="w-full p-2 rounded bg-neutral-900 border border-neutral-700"
+                />
+
+                <button
+                  onClick={handleGenerate}
+                  disabled={loading || !word}
+                  className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-white font-bold disabled:opacity-50"
                 >
-                  {languages.map((lang) => (
-                    <option key={lang.id} value={lang.id}>
-                      {lang.name}
-                    </option>
-                  ))}
-                </select>
+                  {loading ? "Generando..." : "Generar"}
+                </button>
               </div>
-
-              <textarea
-                placeholder="Context (optional, premium only)"
-                value={context}
-                onChange={(e) => setContext(e.target.value)}
-                className="w-full p-2 rounded bg-neutral-900 border border-neutral-700 min-h-[100px]"
-              />
-
-              <button
-                onClick={handleGenerate}
-                disabled={loading || !word}
-                className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-white font-bold disabled:opacity-50"
-              >
-                {loading ? "Generando..." : "Generar"}
-              </button>
             </div>
 
-            {/* Card Preview y acciones */}
+            {/* Columna derecha: Vista previa tarjeta */}
             {result && (
-              <div className="w-full lg:w-1/2 flex flex-col items-end">
-                <h2 className="text-lg text-white mb-2 font-semibold">Card Preview</h2>
+              <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-end">
+                <h2 className="text-3xl font-bold mb-6">Card Preview</h2>
                 <GeneratedCard
                   word={result.word}
                   translation={result.translation}
@@ -173,18 +200,12 @@ export default function CreatePage() {
                   imageUrl={result.image_url}
                   audioWordUrl={result.audio_word_url}
                   audioSentenceUrl={result.audio_sentence_url}
+                  onSave={handleSave}
+                  onDownload={handleDownload}
                 />
-                <div className="flex gap-4 mt-4">
-                  <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-full text-sm">
-                    Guardar
-                  </button>
-                  <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-full text-sm">
-                    Download
-                  </button>
-                </div>
               </div>
             )}
-          </section>
+          </div>
         </main>
       </>
     </ProtectedRoute>

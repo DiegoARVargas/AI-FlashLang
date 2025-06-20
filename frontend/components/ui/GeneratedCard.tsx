@@ -1,8 +1,8 @@
 "use client";
 
-import { Volume2, Save } from "lucide-react";
-import clsx from "clsx";
-import { useRef } from "react";
+import { useState } from "react";
+import { Save, Download } from "lucide-react";
+import AudioButton from "@/components/ui/AudioButton";
 
 interface GeneratedCardProps {
   word: string;
@@ -13,6 +13,7 @@ interface GeneratedCardProps {
   audioWordUrl?: string;
   audioSentenceUrl?: string;
   onSave?: () => void;
+  onDownload?: () => void;
 }
 
 export default function GeneratedCard({
@@ -24,63 +25,80 @@ export default function GeneratedCard({
   audioWordUrl,
   audioSentenceUrl,
   onSave,
+  onDownload,
 }: GeneratedCardProps) {
-  const audioWordRef = useRef<HTMLAudioElement | null>(null);
-  const audioSentenceRef = useRef<HTMLAudioElement | null>(null);
-
+  const [showTranslation, setShowTranslation] = useState(false);
   return (
-    <div className="bg-[#130322] text-white p-6 rounded-2xl border border-purple-700 shadow-lg max-w-2xl w-full relative">
-      <div className="flex justify-between items-start mb-4">
-        <h2 className="text-3xl font-bold">
-          {word}
-        </h2>
-        {audioWordUrl && (
-          <button onClick={() => audioWordRef.current?.play()} className="text-purple-400 hover:text-purple-300">
-            <Volume2 size={20} />
-            <audio ref={audioWordRef} src={audioWordUrl} />
-          </button>
-        )}
+    <div className="relative flex flex-col w-full max-w-[560px] bg-[#130322] border border-purple-700 rounded-2xl shadow-xl text-white p-6">
+
+      {/* Header */}
+      <div className="mb-3">
+        <div className="flex items-center gap-8">
+          <h1 className="text-3xl font-bold">{word}</h1>
+          {audioWordUrl && <AudioButton src={audioWordUrl} size={28} />}
+        </div>
       </div>
 
-      {/* Definiciones / traducciones */}
-      <div className="mb-4">
-        <p className="text-sm text-neutral-400">Traducción:</p>
-        <p className="text-purple-400 font-semibold text-lg">{translation}</p>
+      {/* Línea separadora */}
+      <div className="border-t border-gray-700 my-4" />
+
+      {/* Traducción */}
+      <div className="mb-3">
+        <p className="text-sm text-neutral-400 mb-1">Traducción:</p>
+        <p className="text-purple-400 text-lg font-semibold">{translation}</p>
       </div>
+
+      {/* Línea separadora */}
+      <div className="border-t border-gray-700 my-4" />
 
       {/* Imagen */}
       {imageUrl && (
-        <div className="flex justify-center mb-4">
-          <img src={imageUrl} alt="Visual" className="rounded-lg w-full max-h-48 object-contain border border-neutral-800" />
+        <div className="mb-4">
+          <img
+            src={imageUrl}
+            alt="Imagen generada"
+            className="w-full h-[140px] object-contain rounded-md border border-neutral-800"
+          />
         </div>
       )}
 
       {/* Ejemplo */}
-      <div>
-        <p className="text-sm text-neutral-400">Ejemplo:</p>
+      <div className="mb-3">
+        <p className="text-sm text-neutral-400 mb-1">Ejemplo:</p>
         <div className="flex items-center gap-2">
           <p className="text-white leading-tight">{example}</p>
-          {audioSentenceUrl && (
-            <button onClick={() => audioSentenceRef.current?.play()} className="text-purple-400 hover:text-purple-300">
-              <Volume2 size={18} />
-              <audio ref={audioSentenceRef} src={audioSentenceUrl} />
-            </button>
-          )}
+          {audioSentenceUrl && <AudioButton src={audioSentenceUrl} size={24} />}
         </div>
-        <p className="italic text-purple-300 text-sm mt-1">{exampleTranslation}</p>
+        <p
+          className="italic text-sm text-neutral-500 cursor-pointer hover:text-purple-300 transition"
+          onClick={() => setShowTranslation((prev) => !prev)}
+        >
+          {showTranslation ? exampleTranslation : "translate"}
+        </p>
       </div>
 
-      {/* Guardar botón */}
-      {onSave && (
-        <div className="flex justify-end mt-6">
+      {/* Línea separadora */}
+      <div className="border-t border-gray-700 my-4" />
+
+      {/* Acciones */}
+      <div className="flex justify-end gap-4 mt-4">
+        {onDownload && (
+          <button
+            onClick={onDownload}
+            className="flex items-center gap-2 border border-purple-500 text-purple-300 hover:bg-purple-800/10 px-4 py-2 rounded-full text-sm transition"
+          >
+            <Download size={16} /> Descargar
+          </button>
+        )}
+        {onSave && (
           <button
             onClick={onSave}
             className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full font-semibold text-sm shadow"
           >
             <Save size={16} /> Guardar
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
