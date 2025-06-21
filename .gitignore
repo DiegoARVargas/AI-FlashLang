@@ -45,3 +45,6 @@ Thumbs.db
 # Archivos de requerimientos y documentación (ya están OK)
 COMMIT_TEMPLATE.md
 *.md
+
+# archivo con clave de API google cloud
+credentials/

@@ -11,7 +11,8 @@ from django.db import IntegrityError
 from openai import OpenAI
 import os
 import re
-from deep_translator import GoogleTranslator
+from google.cloud import translate_v2 as gcloud_translate
+#from deep_translator import GoogleTranslator
 from .audio_utils import generate_gtts_audio_for_word, generate_gtts_audio_for_sentence
 from .anki_exporter import generate_apkg_for_user
 
@@ -114,14 +115,28 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
         if not api_key:
             raise Exception("La API Key de OpenAI no está definida en las variables de entorno.")
         return OpenAI(api_key=api_key)
+    
+    def translate_with_google_cloud(self, text, source_lang, target_lang):
+        client = gcloud_translate.Client()
+        result = client.translate(text, source_language=source_lang, target_language=target_lang)
+        return result['translatedText']
 
     def generate_content_for_shared(self, shared):
         prompt = (
-            f"For the word '{shared.word}' in language '{shared.source_lang.code}', generate the following ONLY in English:\n"
-            f"1. An example sentence using the word (start with 'Example sentence:')\n"
-            f"2. A translation to '{shared.target_lang.code}' in the format: (v.) translate "
-            f"(start with 'Translation:')\n"
-            f"Always respond in English only."
+            f"You are an AI assistant helping users learn vocabulary through example sentences and direct translations.\n\n"
+            f"Your task is to generate the following for the word **'{shared.word}'** in the source language **'{shared.source_lang.name}'**:\n\n"
+            f"### FORMAT STRICTLY:\n"
+            f"Example sentence:\n"
+            f"<example_sentence_here>\n\n"
+            f"Translation:\n"
+            f"<only the translation of the word '{shared.word}' in '{shared.target_lang.name}', with the grammatical type abbreviated like (v.), (n), (adj.), etc.>\n\n"
+            f"### RULES:\n"
+            f"- The example sentence must be written in **{shared.source_lang.name}**.\n"
+            f"- The translation must be in **{shared.target_lang.name}** and ONLY include the meaning of the word '{shared.word}' in this format: (v.) traducción, (n) traducción, etc.\n"
+            f"- DO NOT include full sentence translations.\n"
+            f"- DO NOT explain anything or ask any questions.\n"
+            f"- DO NOT add any introductory or closing sentences.\n"
+            f"- Just follow the FORMAT strictly and output the two blocks only.\n"
         )
 
         client = self.get_openai_client()
@@ -139,10 +154,9 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
         if not example_sentence or not translation:
             raise Exception(f"No se pudo extraer contenido de OpenAI. Respuesta: {content}")
 
-        translated_sentence = GoogleTranslator(
-            source=shared.source_lang.code,
-            target=shared.target_lang.code
-        ).translate(example_sentence)
+        translated_sentence = self.translate_with_google_cloud(
+            example_sentence, shared.source_lang.code, shared.target_lang.code
+        )
 
         shared.translation = translation
         shared.example_sentence = example_sentence
@@ -155,11 +169,21 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
 
     def generate_content_for_custom(self, custom):
         prompt = (
-            f"Para la palabra '{custom.word}' en el idioma '{custom.source_lang.code}', con el contexto '{custom.context}', "
-            f"genera una respuesta en **inglés** que contenga:\n"
-            f"1. Example sentence: Una oración de ejemplo que use la palabra en contexto.\n"
-            f"2. Translation: Su traducción en '{custom.target_lang.code}' incluyendo el tipo gramatical "
-            f"en formato (abreviación) traducción. Por ejemplo: (n) préstamo"
+            f"You are an AI assistant helping users learn vocabulary through example sentences and direct translations.\n\n"
+            f"Your task is to generate the following for the word **'{custom.word}'** in the source language **'{custom.source_lang.name}'**, "
+            f"with the usage context **'{custom.context}'**:\n\n"
+            f"### FORMAT STRICTLY:\n"
+            f"Example sentence:\n"
+            f"<example_sentence_here>\n\n"
+            f"Translation:\n"
+            f"<only the translation of the word '{custom.word}' in '{custom.target_lang.name}', with the grammatical type abbreviated like (v.), (n), (adj.), etc.>\n\n"
+            f"### RULES:\n"
+            f"- The example sentence must be written in **{custom.source_lang.name}** and reflect the context: '{custom.context}'.\n"
+            f"- The translation must be in **{custom.target_lang.name}** and ONLY include the meaning of the word '{custom.word}' in this format: (v.) traducción, (n) traducción, etc.\n"
+            f"- DO NOT include full sentence translations.\n"
+            f"- DO NOT explain anything or ask any questions.\n"
+            f"- DO NOT add any introductory or closing sentences.\n"
+            f"- Just follow the FORMAT strictly and output the two blocks only.\n"
         )
 
         client = self.get_openai_client()
@@ -172,7 +196,9 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
         )
         content = response.choices[0].message.content.strip()
         example_sentence, translation = self.extract_response_data(content)
-        translated_sentence = GoogleTranslator(source=custom.source_lang.code, target=custom.target_lang.code).translate(example_sentence)
+        translated_sentence = self.translate_with_google_cloud(
+            example_sentence, custom.source_lang.code, custom.target_lang.code
+        )
 
         custom.translation = translation
         custom.example_sentence = example_sentence
@@ -184,24 +210,35 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
     def extract_response_data(self, content):
         """
         Extrae la oración de ejemplo y la traducción desde el contenido entregado por OpenAI.
-        Limpia símbolos innecesarios y duplicados como '**' o duplicaciones como 'word (v) word'.
+        Se asegura de que la traducción sea corta y con formato (v.) palabra, y no una oración.
         """
         lines = content.strip().split("\n")
         example_sentence = ""
         translation = ""
 
-        for line in lines:
-            # Detectar oración de ejemplo
-            if re.search(r"example sentence", line, re.IGNORECASE) or line.strip().startswith("1."):
+        for i, line in enumerate(lines):
+            lower = line.strip().lower()
+
+            if "example sentence:" in lower:
                 example_sentence = line.split(":", 1)[-1].strip()
-            elif re.search(r"translation", line, re.IGNORECASE) or line.strip().startswith("2."):
+                if not example_sentence and i + 1 < len(lines):
+                    example_sentence = lines[i + 1].strip()
+
+            elif "translation:" in lower:
                 translation = line.split(":", 1)[-1].strip()
+                if not translation and i + 1 < len(lines):
+                    translation = lines[i + 1].strip()
 
-        # Limpieza de símbolos '**'
-        example_sentence = example_sentence.lstrip("* ").strip()
-        translation = translation.lstrip("* ").strip()
+        # Limpieza de símbolos
+        example_sentence = example_sentence.strip("* ").strip()
+        translation = translation.strip("* ").strip()
 
-        # Limpieza de duplicación como 'ganar (v) ganar'
+        # ⚠️ Validación: evitar que la traducción sea una oración completa
+        # Si contiene más de 6 palabras o termina en punto, algo anda mal
+        if len(translation.split()) > 6 or translation.endswith("."):
+            raise Exception(f"La traducción parece ser una oración completa: '{translation}'")
+
+        # Corrección de formato duplicado: "piña (v.) piña"
         match = re.match(r"^(.+?)\s+\((.*?)\)\s+\1$", translation)
         if match:
             root, abbr = match.groups()

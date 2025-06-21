@@ -13,7 +13,9 @@ def generate_gtts_audio_for_word(word_obj):
     Usa el idioma definido por source_lang.code del usuario.
     """
     lang_code = word_obj.source_lang.code if word_obj.source_lang else "en"
-
+    if not word_obj.word.strip():
+        raise ValueError("La palabra está vacía. No se puede generar audio.")
+    
     tts = gTTS(text=word_obj.word, lang=lang_code)
     audio_buffer = BytesIO()
     tts.write_to_fp(audio_buffer)
@@ -22,7 +24,6 @@ def generate_gtts_audio_for_word(word_obj):
     filename = f"{word_obj.word}_word.mp3"
     word_obj.audio_word.save(filename, ContentFile(audio_buffer.read()))
     word_obj.save()
-
     return filename
 
 def generate_gtts_audio_for_sentence(word_obj):
@@ -30,6 +31,8 @@ def generate_gtts_audio_for_sentence(word_obj):
     Genera el audio de la frase de ejemplo usando el idioma de origen seleccionado por el usuario.
     """
     lang_code = word_obj.source_lang.code if word_obj.source_lang else "en"
+    if not word_obj.word.strip():
+        raise ValueError("La palabra está vacía. No se puede generar audio.")
 
     tts = gTTS(text=word_obj.example_sentence, lang=lang_code)
     audio_buffer = BytesIO()
