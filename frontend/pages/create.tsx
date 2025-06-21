@@ -206,6 +206,48 @@ export default function CreatePage() {
               </div>
             )}
           </div>
+          {/* Línea divisoria */}
+          <div className="w-full border-t border-blue-500/40 my-12" />
+
+          {/* Carga masiva */}
+          <div className="w-full max-w-7xl mx-auto">
+            <h2 className="text-3xl font-bold mb-4">Carga Masiva de Palabras (.csv)</h2>
+
+            <div
+              className="w-full p-10 border-2 border-dashed border-purple-500/40 rounded-xl text-center bg-neutral-900 text-neutral-300 hover:border-purple-500 transition cursor-pointer"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files?.[0];
+                if (file && file.name.endsWith(".csv")) {
+                  alert(`📁 Archivo recibido: ${file.name}`);
+                  // lógica futura aquí
+                } else {
+                  alert("❌ Solo se permiten archivos CSV.");
+                }
+              }}
+              onClick={() => document.getElementById("csvInput")?.click()}
+            >
+              <p className="text-lg">Arrastra aquí tu archivo .csv o haz clic para seleccionarlo</p>
+              <p className="text-sm text-neutral-500 mt-2">Formato: word, source_lang_id, target_lang_id, context, deck</p>
+            </div>
+
+            <input
+              id="csvInput"
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file && file.name.endsWith(".csv")) {
+                  alert(`📁 Archivo seleccionado: ${file.name}`);
+                  // lógica futura aquí
+                } else {
+                  alert("❌ Solo se permiten archivos CSV.");
+                }
+              }}
+            />
+          </div>
         </main>
       </>
     </ProtectedRoute>
