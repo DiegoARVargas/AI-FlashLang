@@ -5,6 +5,7 @@ import Cookies from "js-cookie";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Navbar from "@/components/Navbar";
 import GeneratedCard from "@/components/ui/GeneratedCard";
+import EditableTable from "@/components/ui/EditableTable";
 
 interface Language {
   id: number;
@@ -74,18 +75,17 @@ export default function CreatePage() {
           deck,
         }),
       });
-  
+
       if (res.status === 401) throw new Error("Token inválido o expirado. Inicia sesión nuevamente.");
       if (res.status === 403) throw new Error("No tienes permisos para usar esta función (¿quizás contexto premium?)");
-  
+
       const data = await res.json();
-  
       const content = data.shared_word || data.custom_content;
-  
+
       if (!content) {
         throw new Error("La respuesta del servidor no contiene datos válidos.");
       }
-  
+
       setResult({
         word: content.word,
         translation: content.translation,
@@ -102,7 +102,6 @@ export default function CreatePage() {
       setLoading(false);
     }
   };
-  
 
   const handleDownload = () => {
     alert("⚠️ Aquí irá la lógica para descargar el .apkg con la palabra generada.");
@@ -118,7 +117,6 @@ export default function CreatePage() {
         <Navbar />
         <main className="min-h-screen bg-black text-white p-6">
           <div className="flex flex-col lg:flex-row justify-between gap-12 items-start w-full max-w-7xl mx-auto">
-            {/* Columna izquierda: Formulario */}
             <div className="w-full lg:w-1/2">
               <h1 className="text-3xl font-bold mb-6">Crear nueva palabra</h1>
 
@@ -188,7 +186,6 @@ export default function CreatePage() {
               </div>
             </div>
 
-            {/* Columna derecha: Vista previa tarjeta */}
             {result && (
               <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-end">
                 <h2 className="text-3xl font-bold mb-6">Card Preview</h2>
@@ -206,11 +203,12 @@ export default function CreatePage() {
               </div>
             )}
           </div>
+
           {/* Línea divisoria */}
           <div className="w-full border-t border-blue-500/40 my-12" />
 
-          {/* Carga masiva */}
-          <div className="w-full max-w-7xl mx-auto">
+          {/* Carga Masiva */}
+          <div className="w-full max-w-7xl mx-auto mb-16">
             <h2 className="text-3xl font-bold mb-4">Carga Masiva de Palabras (.csv)</h2>
 
             <div
@@ -221,7 +219,6 @@ export default function CreatePage() {
                 const file = e.dataTransfer.files?.[0];
                 if (file && file.name.endsWith(".csv")) {
                   alert(`📁 Archivo recibido: ${file.name}`);
-                  // lógica futura aquí
                 } else {
                   alert("❌ Solo se permiten archivos CSV.");
                 }
@@ -241,12 +238,20 @@ export default function CreatePage() {
                 const file = e.target.files?.[0];
                 if (file && file.name.endsWith(".csv")) {
                   alert(`📁 Archivo seleccionado: ${file.name}`);
-                  // lógica futura aquí
                 } else {
                   alert("❌ Solo se permiten archivos CSV.");
                 }
               }}
             />
+          </div>
+
+          {/* Línea divisoria */}
+          <div className="w-full border-t border-blue-500/40 my-12" />
+
+          {/* Carga Manual tipo Excel */}
+          <div className="w-full max-w-7xl mx-auto mb-12">
+            <h2 className="text-3xl font-bold mb-4 text-white">Carga Manual</h2>
+            <EditableTable languages={languages} />
           </div>
         </main>
       </>
