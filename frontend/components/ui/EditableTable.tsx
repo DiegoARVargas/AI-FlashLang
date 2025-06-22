@@ -1,7 +1,9 @@
+// ✅ EditableTable.tsx
 "use client";
 
 import { useState } from "react";
 import AudioButton from "@/components/ui/AudioButton";
+import Cookies from "js-cookie";
 
 interface Language {
   id: number;
@@ -23,18 +25,17 @@ interface Row {
 }
 
 export default function EditableTable({ languages }: { languages: Language[] }) {
-  const [rows, setRows] = useState<Row[]>([
-    { word: "", translation: "", example: "", exampleTrans: "", deck: "" },
-  ]);
+  const [rows, setRows] = useState<Row[]>([{ word: "", translation: "", example: "", exampleTrans: "", deck: "" }]);
   const [sourceLang, setSourceLang] = useState<number>(languages[0]?.id || 1);
   const [targetLang, setTargetLang] = useState<number>(languages[1]?.id || 2);
   const [context, setContext] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
   const updateCell = (
     index: number,
     key: "word" | "translation" | "example" | "exampleTrans" | "deck",
     value: string
-  ) => {  
+  ) => {
     const updated = [...rows];
     updated[index][key] = value;
     setRows(updated);
@@ -60,6 +61,52 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
       context,
     }));
     setRows(updated);
+    alert("🌍 Valores globales aplicados a todas las filas.");
+  };
+
+  const handleGenerateAll = async () => {
+    setLoading(true);
+    const token = Cookies.get("access_token");
+
+    const newRows = await Promise.all(
+      rows.map(async (row) => {
+        try {
+          const response = await fetch("http://localhost:8010/api/vocabulary/", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              word: row.word,
+              source_lang: row.source_lang ?? sourceLang,
+              target_lang: row.target_lang ?? targetLang,
+              context: row.context ?? (context || undefined),
+              deck: row.deck || "MyDeck",
+            }),
+          });
+
+          const data = await response.json();
+          const content = data.shared_word || data.custom_content;
+
+          return {
+            ...row,
+            translation: content.translation,
+            example: content.example_sentence,
+            exampleTrans: content.example_translation,
+            audioWordUrl: content.audio_word,
+            audioSentenceUrl: content.audio_sentence,
+          };
+        } catch (err) {
+          console.error("❌ Error generando fila:", row.word);
+          return row;
+        }
+      })
+    );
+
+    setRows(newRows);
+    alert("✅ Generación masiva finalizada");
+    setLoading(false);
   };
 
   return (
@@ -71,9 +118,7 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
           className="p-2 bg-neutral-800 text-white rounded border border-purple-500"
         >
           {languages.map((lang) => (
-            <option key={lang.id} value={lang.id}>
-              {lang.name}
-            </option>
+            <option key={lang.id} value={lang.id}>{lang.name}</option>
           ))}
         </select>
         <select
@@ -82,9 +127,7 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
           className="p-2 bg-neutral-800 text-white rounded border border-purple-500"
         >
           {languages.map((lang) => (
-            <option key={lang.id} value={lang.id}>
-              {lang.name}
-            </option>
+            <option key={lang.id} value={lang.id}>{lang.name}</option>
           ))}
         </select>
         <input
@@ -99,6 +142,13 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
           className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm"
         >
           Aplicar a todas las filas
+        </button>
+        <button
+          onClick={handleGenerateAll}
+          className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded text-sm disabled:opacity-40"
+          disabled={loading}
+        >
+          {loading ? "Generando..." : "Generar Todo"}
         </button>
       </div>
 
