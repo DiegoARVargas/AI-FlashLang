@@ -30,6 +30,7 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
   const [targetLang, setTargetLang] = useState<number>(languages[1]?.id || 2);
   const [context, setContext] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [generatedIds, setGeneratedIds] = useState<number[]>([]); // 🆕 Agregado para almacenar los IDs generados
 
   const updateCell = (
     index: number,
@@ -54,8 +55,8 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
   };
 
   const clearAllRows = () => {
-    // 🔧 CAMBIO: Nueva función para limpiar todos los registros
     setRows([]);
+    setGeneratedIds([]); // 🆕 Limpiar también los IDs generados
   };
 
   const applyGlobalsToRows = () => {
@@ -94,6 +95,8 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
           const data = await response.json();
           const content = data.shared_word || data.custom_content;
 
+          setGeneratedIds((prev) => [...prev, data.id]); // 🆕 Guardar ID
+
           return {
             ...row,
             translation: content.translation,
@@ -112,6 +115,41 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
     setRows(newRows);
     alert("✅ Generación masiva finalizada");
     setLoading(false);
+  };
+
+  const handleDownloadDeck = async () => { // 🆕 Nueva función para descarga
+    if (generatedIds.length === 0) {
+      alert("⚠️ No hay palabras generadas para descargar.");
+      return;
+    }
+
+    try {
+      const token = Cookies.get("access_token");
+      const response = await fetch("http://localhost:8010/api/vocabulary/download-apkg/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ ids: generatedIds }),
+      });
+
+      if (!response.ok) throw new Error("Error al generar el mazo");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "aiflashlang_deck.apkg";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      alert("📦 Mazo descargado correctamente");
+    } catch (err) {
+      console.error("❌ Error al descargar mazo", err);
+      alert("Error al descargar el mazo.");
+    }
   };
 
   return (
@@ -156,12 +194,17 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
           {loading ? "Generando..." : "Generar Todo"}
         </button>
         <button
-          onClick={clearAllRows} // 🔧 CAMBIO: Asignación del evento
+          onClick={clearAllRows}
           className="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded text-sm"
         >
           Limpiar Todo
         </button>
-        {/* 🔧 CAMBIO: Botón añadido */}
+        <button
+          onClick={handleDownloadDeck} // 🆕 Botón de descarga
+          className="bg-[#2323ff] hover:bg-blue-700 text-white px-4 py-2 rounded text-sm"
+        >
+          📦 Descargar Mazo
+        </button>
       </div>
 
       <table className="w-full text-left border-collapse">

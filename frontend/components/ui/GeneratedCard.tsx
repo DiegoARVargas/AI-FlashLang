@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Save, Download } from "lucide-react";
 import AudioButton from "@/components/ui/AudioButton";
+import Cookies from "js-cookie";
 
 interface GeneratedCardProps {
   word: string;
@@ -12,8 +13,8 @@ interface GeneratedCardProps {
   imageUrl?: string;
   audioWordUrl?: string;
   audioSentenceUrl?: string;
+  deckName?: string;
   onSave?: () => void;
-  onDownload?: () => void;
 }
 
 export default function GeneratedCard({
@@ -24,13 +25,49 @@ export default function GeneratedCard({
   imageUrl,
   audioWordUrl,
   audioSentenceUrl,
+  deckName = "MyDeck", // valor por defecto
   onSave,
-  onDownload,
 }: GeneratedCardProps) {
   const [showTranslation, setShowTranslation] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    try {
+      setDownloading(true);
+      const token = Cookies.get("access_token");
+
+      const url = `http://localhost:8010/api/vocabulary/download-apkg/?deck_name=${encodeURIComponent(deckName)}`;
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al descargar el mazo.");
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = `aiflashlang_${deckName}.apkg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      alert("❌ No se pudo descargar el mazo.");
+      console.error("Error en la descarga:", error);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="relative flex flex-col w-full max-w-[560px] bg-[#130322] border border-purple-700 rounded-2xl shadow-xl text-white p-6">
-
       {/* Header */}
       <div className="mb-3">
         <div className="flex items-center gap-8">
@@ -39,7 +76,6 @@ export default function GeneratedCard({
         </div>
       </div>
 
-      {/* Línea separadora */}
       <div className="border-t border-gray-700 my-4" />
 
       {/* Traducción */}
@@ -48,7 +84,6 @@ export default function GeneratedCard({
         <p className="text-purple-400 text-lg font-semibold">{translation}</p>
       </div>
 
-      {/* Línea separadora */}
       <div className="border-t border-gray-700 my-4" />
 
       {/* Imagen */}
@@ -77,19 +112,18 @@ export default function GeneratedCard({
         </p>
       </div>
 
-      {/* Línea separadora */}
       <div className="border-t border-gray-700 my-4" />
 
       {/* Acciones */}
       <div className="flex justify-end gap-4 mt-4">
-        {onDownload && (
-          <button
-            onClick={onDownload}
-            className="flex items-center gap-2 border border-purple-500 text-purple-300 hover:bg-purple-800/10 px-4 py-2 rounded-full text-sm transition"
-          >
-            <Download size={16} /> Descargar
-          </button>
-        )}
+        <button
+          onClick={handleDownload}
+          className="flex items-center gap-2 border border-purple-500 text-purple-300 hover:bg-purple-800/10 px-4 py-2 rounded-full text-sm transition disabled:opacity-50"
+          disabled={downloading}
+        >
+          <Download size={16} /> {downloading ? "Descargando..." : "Descargar"}
+        </button>
+
         {onSave && (
           <button
             onClick={onSave}
