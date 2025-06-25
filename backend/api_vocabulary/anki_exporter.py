@@ -41,7 +41,12 @@ def generate_apkg_for_user(user, deck_name=None, ids=None) -> tuple[str, str]:
 
     if os.path.exists(output_path):
         # Registrar historial incluso si se reutiliza
-        DownloadHistory.objects.create(user=user, filename=output_filename)
+        DownloadHistory.objects.create(
+            user=user,
+            deck_name=base_deck_name,
+            word_ids=",".join(str(w.id) for w in user_words),
+            file_path=output_path,
+        )
         return output_path, base_deck_name
 
     # Crear mazo Anki y medios
@@ -91,6 +96,12 @@ def generate_apkg_for_user(user, deck_name=None, ids=None) -> tuple[str, str]:
     genanki.Package(deck, media_files=media_files).write_to_file(output_path)
 
     # Registrar historial de descarga
-    DownloadHistory.objects.create(user=user, filename=output_filename)
+    DownloadHistory.objects.create(
+        user=user,
+        deck_name=base_deck_name,
+        word_ids=",".join(str(w.id) for w in user_words),
+        file_path=output_path,
+    )
+
 
     return output_path, base_deck_name

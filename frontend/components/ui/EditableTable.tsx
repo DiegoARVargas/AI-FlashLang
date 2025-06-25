@@ -53,6 +53,11 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
     ]);
   };
 
+  const clearAllRows = () => {
+    // 🔧 CAMBIO: Nueva función para limpiar todos los registros
+    setRows([]);
+  };
+
   const applyGlobalsToRows = () => {
     const updated = rows.map((row) => ({
       ...row,
@@ -150,6 +155,13 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
         >
           {loading ? "Generando..." : "Generar Todo"}
         </button>
+        <button
+          onClick={clearAllRows} // 🔧 CAMBIO: Asignación del evento
+          className="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded text-sm"
+        >
+          Limpiar Todo
+        </button>
+        {/* 🔧 CAMBIO: Botón añadido */}
       </div>
 
       <table className="w-full text-left border-collapse">
