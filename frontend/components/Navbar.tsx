@@ -26,7 +26,7 @@ export default function Navbar() {
             Create Words
           </Link>
           <Link
-            href="/words"
+            href="/my-words"
             className="relative hover:text-[#a855f7] transition duration-200 electric-hover hover:rotate-[1deg] hover:scale-105"
           >
             My Words

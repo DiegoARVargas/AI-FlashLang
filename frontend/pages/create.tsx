@@ -103,10 +103,6 @@ export default function CreatePage() {
     }
   };
 
-  const handleDownload = () => {
-    alert("⚠️ Aquí irá la lógica para descargar el .apkg con la palabra generada.");
-  };
-
   const handleSave = () => {
     console.log("✅ Palabra guardada. Acción futura.");
   };
@@ -197,8 +193,8 @@ export default function CreatePage() {
                   imageUrl={result.image_url}
                   audioWordUrl={result.audio_word_url}
                   audioSentenceUrl={result.audio_sentence_url}
+                  deckName={deck}
                   onSave={handleSave}
-                  onDownload={handleDownload}
                 />
               </div>
             )}

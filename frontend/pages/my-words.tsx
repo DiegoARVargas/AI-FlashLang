@@ -1,0 +1,243 @@
+// ✅ pages/my-words.tsx
+"use client";
+
+import { useEffect, useState } from "react";
+import Cookies from "js-cookie";
+import Navbar from "@/components/Navbar";
+
+interface WordEntry {
+  id: number;
+  deck: string;
+  created_at: string;
+  shared_word?: {
+    word: string;
+    translation: string;
+  };
+  custom_content?: {
+    word: string;
+    translation: string;
+  };
+}
+
+export default function MyWordsPage() {
+  const [words, setWords] = useState<WordEntry[]>([]);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [deckFilter, setDeckFilter] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [newDeckName, setNewDeckName] = useState<string>("");
+  const itemsPerPage = 20;
+
+  useEffect(() => {
+    const fetchWords = async () => {
+      const token = Cookies.get("access_token");
+      const res = await fetch("http://localhost:8010/api/vocabulary/", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      setWords(data);
+    };
+    fetchWords();
+  }, []);
+
+  const toggleSelection = (id: number) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    const visibleIds = paginatedWords.map((entry) => entry.id);
+    const allSelected = visibleIds.every((id) => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !visibleIds.includes(id)));
+    } else {
+      const newIds = visibleIds.filter((id) => !selectedIds.includes(id));
+      setSelectedIds((prev) => [...prev, ...newIds]);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (!selectedIds.length) return;
+    const confirmed = confirm("⚠️ ¿Estás seguro de que deseas eliminar las palabras seleccionadas?");
+    if (!confirmed) return;
+
+    const token = Cookies.get("access_token");
+    await Promise.all(
+      selectedIds.map((id) =>
+        fetch(`http://localhost:8010/api/vocabulary/${id}/`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+      )
+    );
+    setWords((prev) => prev.filter((entry) => !selectedIds.includes(entry.id)));
+    setSelectedIds([]);
+  };
+
+  const handleDownloadSelected = async () => {
+    if (!selectedIds.length) return;
+
+    const token = Cookies.get("access_token");
+    let filename = "aiflashlang_custom.apkg";
+
+    if (newDeckName.trim()) {
+      filename = `aiflashlang_${newDeckName.trim()}.apkg`;
+    }
+
+    const res = await fetch("http://localhost:8010/api/vocabulary/download-apkg/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ ids: selectedIds, deck_name: newDeckName.trim() || "custom" }),
+    });
+
+    if (!res.ok) {
+      alert("❌ No se pudo descargar el mazo seleccionado.");
+      return;
+    }
+
+    const blob = await res.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+  };
+
+  const filteredWords = words.filter((entry) =>
+    deckFilter.trim() === ""
+      ? true
+      : entry.deck.toLowerCase().includes(deckFilter.trim().toLowerCase())
+  );
+
+  const hasOrphanWords = words.some((entry) => !entry.shared_word && !entry.custom_content);
+
+  const getWordText = (entry: WordEntry) => {
+    if (entry.custom_content?.word) return entry.custom_content.word;
+    if (entry.shared_word?.word) return entry.shared_word.word;
+    return "❌ Palabra inválida";
+  };
+
+  const getTranslationText = (entry: WordEntry) => {
+    if (entry.custom_content?.translation) return entry.custom_content.translation;
+    if (entry.shared_word?.translation) return entry.shared_word.translation;
+    return "❌ Sin traducción";
+  };
+
+  const totalPages = Math.ceil(filteredWords.length / itemsPerPage);
+  const paginatedWords = filteredWords.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  return (
+    <div className="p-8 bg-black text-white min-h-screen">
+      <Navbar />
+
+      <h1 className="text-3xl font-bold mb-4">Mis Palabras</h1>
+
+      {hasOrphanWords && (
+        <div className="bg-yellow-900 text-yellow-300 p-4 rounded mb-6 border border-yellow-600">
+          ⚠️ Algunas palabras están incompletas (no tienen contenido compartido ni personalizado).
+        </div>
+      )}
+
+      <div className="flex gap-4 mb-6">
+        <input
+          type="text"
+          placeholder="Filtrar por nombre del deck"
+          value={deckFilter}
+          onChange={(e) => setDeckFilter(e.target.value)}
+          className="p-2 bg-neutral-800 text-white rounded border border-purple-500"
+        />
+        <button
+          className="bg-red-700 hover:bg-red-800 text-white px-4 rounded"
+          onClick={handleDeleteSelected}
+        >
+          Eliminar seleccionadas
+        </button>
+        <button
+          className="bg-blue-700 hover:bg-blue-800 text-white px-4 rounded"
+          onClick={handleDownloadSelected}
+        >
+          Descargar seleccionadas
+        </button>
+        <input
+          type="text"
+          placeholder="Nombre para el nuevo deck (opcional)"
+          value={newDeckName}
+          onChange={(e) => setNewDeckName(e.target.value)}
+          className="p-2 bg-neutral-800 text-white rounded border border-blue-500"
+        />
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead className="sticky top-0 bg-black z-10">
+            <tr className="text-purple-400 border-b border-purple-700">
+              <th className="p-2">
+                <input
+                  type="checkbox"
+                  onChange={toggleSelectAll}
+                  checked={
+                    paginatedWords.length > 0 &&
+                    paginatedWords.every((entry) => selectedIds.includes(entry.id))
+                  }
+                />
+              </th>
+              <th className="p-2">Word</th>
+              <th className="p-2">Translation</th>
+              <th className="p-2">Deck</th>
+              <th className="p-2">Creado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedWords.map((entry) => (
+              <tr key={entry.id} className="border-b border-neutral-800">
+                <td className="p-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(entry.id)}
+                    onChange={() => toggleSelection(entry.id)}
+                  />
+                </td>
+                <td className="p-2">{getWordText(entry)}</td>
+                <td className="p-2">{getTranslationText(entry)}</td>
+                <td className="p-2">{entry.deck}</td>
+                <td className="p-2">
+                  {new Date(entry.created_at).toLocaleDateString()}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Paginación */}
+      <div className="flex justify-center gap-2 mt-6">
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            className={`px-3 py-1 rounded border ${
+              page === currentPage
+                ? "bg-purple-700 text-white border-purple-500"
+                : "bg-neutral-800 text-gray-300 border-neutral-700 hover:bg-neutral-700"
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}

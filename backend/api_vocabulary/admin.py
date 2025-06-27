@@ -18,9 +18,9 @@ class CustomWordContentAdmin(admin.ModelAdmin):
 
 @admin.register(UserVocabularyWord)
 class UserVocabularyWordAdmin(admin.ModelAdmin):
-    list_display = ("user", "deck", "created_at")
+    list_display = ("user", "deck", "shared_word", "custom_content", "created_at")
     search_fields = ("user__email", "deck")
-    list_filter = ("deck", "created_at")
+    list_filter = ("deck", "shared_word", "custom_content", "created_at")
 
 @admin.register(DownloadHistory)
 class DownloadHistoryAdmin(admin.ModelAdmin):
