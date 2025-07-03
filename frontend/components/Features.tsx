@@ -12,21 +12,21 @@ export default function Features() {
         </p>
 
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-          <motion.div whileHover={{ scale: 1.05 }} className="bg-[#111111] p-6 rounded-xl shadow-lg">
+          <motion.div whileHover={{ scale: 1.05 }} className="bg-[#111111] p-6 rounded-xl shadow-lg hover:shadow-[0_0_20px_#60a5fa]">
             <h3 className="text-xl font-semibold text-blue-400 mb-2">Aprendizaje Contextual</h3>
             <p className="text-gray-300 text-sm">
               Aprende palabras en el contexto de frases reales. Mejora tu comprensión natural del idioma.
             </p>
           </motion.div>
 
-          <motion.div whileHover={{ scale: 1.05 }} className="bg-[#111111] p-6 rounded-xl shadow-lg">
+          <motion.div whileHover={{ scale: 1.05 }} className="bg-[#111111] p-6 rounded-xl shadow-lg hover:shadow-[0_0_20px_#34d399]">
             <h3 className="text-xl font-semibold text-green-400 mb-2">Tarjetas Automatizadas</h3>
             <p className="text-gray-300 text-sm">
               La IA genera automáticamente ejemplos, traducciones, audios y tarjetas tipo Anki.
             </p>
           </motion.div>
 
-          <motion.div whileHover={{ scale: 1.05 }} className="bg-[#111111] p-6 rounded-xl shadow-lg">
+          <motion.div whileHover={{ scale: 1.05 }} className="bg-[#111111] p-6 rounded-xl shadow-lg hover:shadow-[0_0_20px_#f472b6]">
             <h3 className="text-xl font-semibold text-pink-400 mb-2">Aprendizaje Multilingüe</h3>
             <p className="text-gray-300 text-sm">
               Compatible con varios idiomas. Aprende inglés, francés, portugués y más según tu idioma nativo.

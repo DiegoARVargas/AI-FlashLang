@@ -1,21 +1,27 @@
 import genanki
+import random
 
-flashlang_model = genanki.Model(
-    model_id=1607392319,
-    name="AIFlashLang Model",
-    fields=[
-        {"name": "Word"},
-        {"name": "Translation"},
-        {"name": "Example"},
-        {"name": "ExampleTranslation"},
-        {"name": "Audio"},
-        {"name": "ExampleAudio"},
-        {"name": "Image"},
-    ],
-    templates=[
-        {
-            "name": "FlashLang Card",
-            "qfmt": """
+def get_flashlang_model(allow_duplicates=False):
+    model_id = 1607392319
+    if allow_duplicates:
+        model_id = random.randrange(1 << 30, 1 << 31)
+
+    return genanki.Model(
+        model_id=model_id,
+        name="AIFlashLang Model",
+        fields=[
+            {"name": "Word"},
+            {"name": "Translation"},
+            {"name": "Example"},
+            {"name": "ExampleTranslation"},
+            {"name": "Audio"},
+            {"name": "ExampleAudio"},
+            {"name": "Image"},
+        ],
+        templates=[
+            {
+                "name": "FlashLang Card",
+                "qfmt": """
 <style>
     .customCard {
         margin: 0 auto;
@@ -33,7 +39,7 @@ flashlang_model = genanki.Model(
     
         font-weight: 500;
         font-size: 18px;
-        font-family: "Inter", sans-serif;
+        font-family: \"Inter\", sans-serif;
         color: #fbfafe;
     }
     .horizontalPadding {
@@ -65,9 +71,9 @@ flashlang_model = genanki.Model(
         stroke: none;
     }
 </style>
-  <div class="customCard horizontalPadding">
-    <div class="targetWord">{{Word}}</div>
-    <div class="wordAudioButtonFront">{{Audio}}</div>
+  <div class=\"customCard horizontalPadding\">
+    <div class=\"targetWord\">{{Word}}</div>
+    <div class=\"wordAudioButtonFront\">{{Audio}}</div>
   </div>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -76,7 +82,7 @@ flashlang_model = genanki.Model(
     });
   </script>
 """,
-            "afmt": """
+                "afmt": """
 <style>
     .customCard {
         margin: 0 auto;
@@ -94,7 +100,7 @@ flashlang_model = genanki.Model(
     
         font-weight: 500;
         font-size: 18px;
-        font-family: "Inter", sans-serif;
+        font-family: \"Inter\", sans-serif;
         color: #fbfafe;
     }
     .cardBack {
@@ -188,19 +194,19 @@ flashlang_model = genanki.Model(
     }
 
   </style>
-  <div class="customCard cardBack">
-    <div class="horizontalPadding centerVertically targetWordContainer">
-      <span class="targetWord">{{Word}}</span>
-      <span class="wordAudioButtonBack">{{Audio}}</span>
+  <div class=\"customCard cardBack\">
+    <div class=\"horizontalPadding centerVertically targetWordContainer\">
+      <span class=\"targetWord\">{{Word}}</span>
+      <span class=\"wordAudioButtonBack\">{{Audio}}</span>
     </div>
     
-    <div class="dividerLine"></div>
+    <div class=\"dividerLine\"></div>
 
     {{#Translation}}
-    <div class="horizontalPadding">
-      <div class="header">Translation:</div>
-        <div class="indent">
-            <ul class="definitionsList">
+    <div class=\"horizontalPadding\">
+      <div class=\"header\">Translation:</div>
+        <div class=\"indent\">
+            <ul class=\"definitionsList\">
                 <li>{{Translation}}</li>
             </ul>
         </div>
@@ -208,25 +214,25 @@ flashlang_model = genanki.Model(
     {{/Translation}}
   
     {{#Image}}
-    <div class="image">{{Image}}</div>
+    <div class=\"image\">{{Image}}</div>
     {{/Image}}
 
-    <div class="dividerLine"></div>
+    <div class=\"dividerLine\"></div>
 
     {{#Example}}
-    <div class="horizontalPadding">
-      <div class="header centerVertically">Example:</div>
-      <div class="indent">
-        <div class="centerVertically" style="position: relative; gap: 5px">
-            <span>"{{Example}}"</span>
-            <span class="sentenceAudioButton">{{ExampleAudio}}</span>
+    <div class=\"horizontalPadding\">
+      <div class=\"header centerVertically\">Example:</div>
+      <div class=\"indent\">
+        <div class=\"centerVertically\" style=\"position: relative; gap: 5px\">
+            <span>\"{{Example}}\"</span>
+            <span class=\"sentenceAudioButton\">{{ExampleAudio}}</span>
         </div>
       </div>
-      <div id="translatedSentence" class="sentenceTranslation">{{hint:ExampleTranslation}}</div>
+      <div id=\"translatedSentence\" class=\"sentenceTranslation\">{{hint:ExampleTranslation}}</div>
     </div>
     {{/Example}}
 
-    <div class="dividerLine"></div>
+    <div class=\"dividerLine\"></div>
     
   </div>
   <script>
@@ -245,6 +251,6 @@ flashlang_model = genanki.Model(
     });
   </script>
 """
-        }
-    ]
-)
+            }
+        ]
+    )

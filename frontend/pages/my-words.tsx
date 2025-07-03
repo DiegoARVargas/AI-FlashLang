@@ -25,6 +25,7 @@ export default function MyWordsPage() {
   const [deckFilter, setDeckFilter] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [newDeckName, setNewDeckName] = useState<string>("");
+  const [allowDuplicates, setAllowDuplicates] = useState<boolean>(false);
   const itemsPerPage = 20;
 
   useEffect(() => {
@@ -94,7 +95,11 @@ export default function MyWordsPage() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ ids: selectedIds, deck_name: newDeckName.trim() || "custom" }),
+      body: JSON.stringify({ 
+        ids: selectedIds, 
+        deck_name: newDeckName.trim() || "custom",
+        allow_duplicates: allowDuplicates,
+      }),
     });
 
     if (!res.ok) {
@@ -178,6 +183,14 @@ export default function MyWordsPage() {
           onChange={(e) => setNewDeckName(e.target.value)}
           className="p-2 bg-neutral-800 text-white rounded border border-blue-500"
         />
+        <label className="flex items-center gap-2 text-sm text-gray-300">
+          <input
+            type="checkbox"
+            checked={allowDuplicates}
+            onChange={(e) => setAllowDuplicates(e.target.checked)}
+          />
+          Permitir duplicados
+        </label>
       </div>
 
       <div className="overflow-x-auto">

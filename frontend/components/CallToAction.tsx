@@ -16,12 +16,6 @@ export default function CallToAction() {
         </button>
       </Link>
       <div className="mt-8 flex justify-center">
-        <Image
-          src="/mascot.png"
-          alt="Flashy celebrando"
-          width={160}
-          height={160}
-        />
       </div>
     </section>
   );

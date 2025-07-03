@@ -251,12 +251,18 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
         user = request.user
         deck_name = request.query_params.get("deck_name", "").strip() or request.data.get("deck_name", "").strip()  # capturar desde la URL
         ids = request.data.get("ids")
+        allow_duplicates = request.data.get("allow_duplicates", False)
         
         if ids and not isinstance(ids, list):
             return Response({"error": "El campo 'ids' debe ser una lista de enteros."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            apkg_path, final_deck_name = generate_apkg_for_user(user, deck_name=deck_name, ids=ids)
+            apkg_path, final_deck_name = generate_apkg_for_user(
+                user, 
+                deck_name=deck_name, 
+                ids=ids,
+                allow_duplicates=bool(allow_duplicates)
+            )
             filename = f"aiflashlang_{final_deck_name}.apkg"
             return FileResponse(open(apkg_path, 'rb'), as_attachment=True, filename=filename)
 
