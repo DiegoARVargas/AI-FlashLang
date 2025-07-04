@@ -6,7 +6,7 @@ class CustomUser(AbstractUser):
     is_premium = models.BooleanField(default=False)  # Indica si el usuario tiene una cuenta premium
     preferred_language = models.CharField(
         max_length=10,
-        choices=[("es", "Español"), ("en", "Inglés"), ("fr", "Francés")],
+        choices=[("es", "Español"), ("en", "Inglés"), ("fr-CA", "Francés (Canadá)"),("pt-BR", "Portugués (Brasil)")],
         default="es",
     )
     created_at = models.DateTimeField(auto_now_add=True)
