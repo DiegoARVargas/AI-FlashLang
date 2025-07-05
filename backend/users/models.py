@@ -9,6 +9,7 @@ class CustomUser(AbstractUser):
         choices=[("es", "Español"), ("en", "Inglés"), ("fr-CA", "Francés (Canadá)"),("pt-BR", "Portugués (Brasil)")],
         default="es",
     )
+    display_name = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -6,7 +6,7 @@ from api_vocabulary.models import DownloadHistory
 class UserMeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ("username", "email", "is_premium", "preferred_language", "created_at")
+        fields = ("username", "email", "is_premium", "preferred_language", "display_name", "created_at")
         read_only_fields = ("username", "email", "is_premium", "created_at")
 
 class DownloadHistorySerializer(serializers.ModelSerializer):
