@@ -52,3 +52,4 @@ typing_extensions==4.12.2
 urllib3==2.3.0
 whitenoise==6.9.0
 google-cloud-translate==3.20.3
+Pillow==11.3.0
