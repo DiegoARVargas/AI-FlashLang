@@ -13,7 +13,7 @@ class UserMeSerializer(serializers.ModelSerializer):
 class DownloadHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = DownloadHistory
-        fields = ("deck_name", "word_ids", "file_path", "created_at")
+        fields = ("id", "deck_name", "word_ids", "file_path", "created_at")
 
 class ChangePasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(write_only=True)
