@@ -6,6 +6,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Navbar from "@/components/Navbar";
 import GeneratedCard from "@/components/ui/GeneratedCard";
 import EditableTable from "@/components/ui/EditableTable";
+import Footer from "@/components/Footer";
 
 interface Language {
   id: number;
@@ -250,6 +251,7 @@ export default function CreatePage() {
             <EditableTable languages={languages} />
           </div>
         </main>
+        <Footer />
       </>
     </ProtectedRoute>
   );

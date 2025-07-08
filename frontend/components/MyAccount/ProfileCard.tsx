@@ -1,9 +1,6 @@
-// /frontend/components/MyAccount/ProfileCard.tsx
-// Muestra el avatar, nombre y correo del usuario, y permite cambiar la foto de perfil.
-
 import { useState } from 'react';
 import Cookies from 'js-cookie';
-import { getMediaUrl } from '@/lib/media'; // ✅ nueva importación
+import { getMediaUrl } from '@/lib/media';
 
 interface Props {
   user: any;
@@ -34,6 +31,8 @@ export default function ProfileCard({ user, refetch }: Props) {
 
       if (!res.ok) throw new Error('Error al subir imagen');
 
+      const updatedUser = await res.json(); // ✅ recibimos el usuario actualizado
+      localStorage.setItem('avatar', updatedUser.avatar || ''); // ✅ guardamos avatar
       refetch();
     } catch (error) {
       console.error('Error uploading avatar:', error);

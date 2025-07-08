@@ -11,6 +11,8 @@ import EditProfileForm from '@/components/MyAccount/EditProfileForm';
 import ChangePasswordForm from '@/components/MyAccount/ChangePasswordForm';
 import DownloadHistory from '@/components/MyAccount/DownloadHistory';
 import DeleteAccountSection from '@/components/MyAccount/DeleteAccountSection';
+import Navbar from '@/components/Navbar';
+import Footer from "@/components/Footer";
 
 export default function MyAccountPage() {
   const {
@@ -30,11 +32,18 @@ export default function MyAccountPage() {
         },
       });
 
-      if (!res.ok) {
-        throw new Error('Error al cargar el perfil');
+      if (!res.ok) throw new Error('Error al cargar el perfil');
+
+      const userData = await res.json();
+
+      // ✅ Guarda avatar en localStorage si está disponible
+      if (userData.avatar) {
+        localStorage.setItem('avatar', userData.avatar);
+      } else {
+        localStorage.removeItem('avatar');
       }
 
-      return res.json();
+      return userData;
     },
   });
 
@@ -46,25 +55,30 @@ export default function MyAccountPage() {
   if (error || !data) return <p className="text-red-500 text-center">Error al cargar tu perfil.</p>;
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-10 text-white">
-      <h1 className="text-3xl font-bold">Mi Cuenta</h1>
+    <div className="min-h-screen bg-gradient-to-br from-[#0d0d0d] to-[#1a1a1a] text-white">
+      <Navbar />
 
-      <section className="grid md:grid-cols-2 gap-6 items-start">
-        <ProfileCard user={data} refetch={refetch} />
-        <EditProfileForm user={data} refetch={refetch} />
-      </section>
+      <div className="max-w-4xl mx-auto p-4 space-y-10">
+        <h1 className="text-4xl font-extrabold mb-10 text-white">Mi Cuenta</h1>
 
-      <section>
-        <ChangePasswordForm />
-      </section>
+        <section className="grid md:grid-cols-2 gap-6 items-start">
+          <ProfileCard user={data} refetch={refetch} />
+          <EditProfileForm user={data} refetch={refetch} />
+        </section>
 
-      <section>
-        <DownloadHistory />
-      </section>
+        <section>
+          <ChangePasswordForm />
+        </section>
 
-      <section>
-        <DeleteAccountSection />
-      </section>
+        <section>
+          <DownloadHistory />
+        </section>
+
+        <section>
+          <DeleteAccountSection />
+        </section>
+      </div>
+      <Footer />
     </div>
   );
 }

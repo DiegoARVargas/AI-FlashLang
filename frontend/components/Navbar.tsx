@@ -2,9 +2,19 @@
 
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { getMediaUrl } from "@/lib/media";
 
 export default function Navbar() {
   const { isAuthenticated, username, logout } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const avatarPath = localStorage.getItem("avatar");
+    if (avatarPath) {
+      setAvatarUrl(getMediaUrl(avatarPath));
+    }
+  }, []);
 
   return (
     <nav className="w-full bg-black/80 backdrop-blur-sm sticky top-0 z-50 border-b border-neutral-800">
@@ -32,7 +42,7 @@ export default function Navbar() {
             My Words
           </Link>
           <Link
-            href="/account"
+            href="/my-account"
             className="relative hover:text-[#a855f7] transition duration-200 electric-hover hover:rotate-[1deg] hover:scale-105"
           >
             My Account
@@ -40,9 +50,17 @@ export default function Navbar() {
 
           {isAuthenticated ? (
             <>
-              <span className="text-sm text-purple-400">
-                Welcome, <strong>{username}</strong>
-              </span>
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="Avatar"
+                  className="w-8 h-8 rounded-full border border-purple-500 object-cover"
+                />
+              ) : (
+                <span className="text-sm text-purple-400">
+                  Welcome, <strong>{username}</strong>
+                </span>
+              )}
               <button
                 onClick={logout}
                 className="text-white hover:text-red-500 transition duration-200"

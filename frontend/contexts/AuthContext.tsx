@@ -1,3 +1,5 @@
+// /frontend/contexts/AuthContext.tsx
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/router';
@@ -5,9 +7,9 @@ import { useRouter } from 'next/router';
 interface AuthContextType {
   isAuthenticated: boolean;
   token: string | null;
-  username: string | null;               // ✅ nuevo
+  username: string | null;
   loading: boolean;
-  login: (token: string, username: string) => void; // ✅ recibe username
+  login: (token: string, username: string) => void;
   logout: () => void;
 }
 
@@ -15,24 +17,24 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
-  const [username, setUsername] = useState<string | null>(null); // ✅ nuevo
+  const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const storedToken = Cookies.get('access_token');
-    const storedUsername = Cookies.get('username'); // ✅ leer username
+    const storedUsername = Cookies.get('username');
     if (storedToken) {
       console.log('🔐 Found token in cookies:', storedToken);
       setToken(storedToken);
-      if (storedUsername) setUsername(storedUsername); // ✅ guardar en estado
+      if (storedUsername) setUsername(storedUsername);
     }
     setLoading(false);
   }, []);
 
   const login = (token: string, username: string) => {
     Cookies.set('access_token', token);
-    Cookies.set('username', username); // ✅ guardar username
+    Cookies.set('username', username);
     setToken(token);
     setUsername(username);
   };
@@ -40,7 +42,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = () => {
     Cookies.remove('access_token');
     Cookies.remove('refresh_token');
-    Cookies.remove('username'); // ✅ eliminar username
+    Cookies.remove('username');
+    localStorage.removeItem('avatar'); // ✅ eliminamos avatar del localStorage
     setToken(null);
     setUsername(null);
     router.push('/login');
@@ -50,7 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     <AuthContext.Provider
       value={{
         token,
-        username, // ✅ añadido al contexto
+        username,
         isAuthenticated: !!token,
         loading,
         login,
