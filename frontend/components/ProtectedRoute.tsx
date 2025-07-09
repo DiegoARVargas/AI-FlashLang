@@ -3,14 +3,14 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
 
-const publicRoutes = ['/', '/login'];
+const publicRoutes = ['/', '/login', '/register']; // ✅ ahora incluye /register
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
-    if (loading) return; // ⏳ Esperar a que termine de cargar
+    if (loading) return;
 
     if (!isAuthenticated && !publicRoutes.includes(router.pathname)) {
       router.push('/login');
