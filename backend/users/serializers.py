@@ -34,3 +34,29 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.set_password(self.validated_data["new_password"])
         user.save()
         return user
+    
+class RegisterUserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, min_length=8)
+    confirm_password = serializers.CharField(write_only=True, required=True, min_length=8)
+
+    class Meta:
+        model = CustomUser
+        fields = ("username", "email", "password", "confirm_password", "display_name", "preferred_language")
+
+    def validate(self, data):
+        if data["password"] != data["confirm_password"]:
+            raise serializers.ValidationError("Las contraseñas no coinciden.")
+        validate_password(data["password"])
+        return data
+
+    def create(self, validated_data):
+        validated_data.pop("confirm_password")
+        user = CustomUser(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            display_name=validated_data.get("display_name", ""),
+            preferred_language=validated_data.get("preferred_language", "es"),
+        )
+        user.set_password(validated_data["password"])
+        user.save()
+        return user

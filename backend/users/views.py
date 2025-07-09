@@ -1,8 +1,9 @@
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
-from .serializers import UserMeSerializer, DownloadHistorySerializer, ChangePasswordSerializer
+from .serializers import UserMeSerializer, DownloadHistorySerializer, ChangePasswordSerializer, RegisterUserSerializer
 from .models import CustomUser
 from api_vocabulary.models import DownloadHistory
 
@@ -24,7 +25,6 @@ class UserMeView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-
 
 class LanguageListView(APIView):
     def get(self, request):
@@ -58,3 +58,22 @@ class DeleteAccountView(APIView):
         username = user.username
         user.delete()
         return Response({"detail": f"Cuenta '{username}' eliminada correctamente."}, status=status.HTTP_204_NO_CONTENT)
+
+class RegisterUserView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        serializer = RegisterUserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "user": {
+                "username": user.username,
+                "email": user.email,
+                "display_name": user.display_name,
+                "preferred_language": user.preferred_language,
+            }
+        }, status=status.HTTP_201_CREATED)
