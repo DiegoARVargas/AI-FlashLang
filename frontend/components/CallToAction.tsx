@@ -10,7 +10,7 @@ export default function CallToAction() {
       <p className="text-gray-300 mt-4 mb-6">
         Conviértete en un maestro del vocabulario con la ayuda de la IA
       </p>
-      <Link href="/login">
+      <Link href="/register">
         <button className="bg-purple-600 hover:bg-purple-700 text-white text-lg px-6 py-3 rounded-full font-semibold shadow-xl">
           Crear cuenta gratis
         </button>

@@ -11,6 +11,7 @@ export const editProfileSchema = z.object({
   }),
 });
 
+  // ✅ Esquema para register
 export const registerSchema = z
   .object({
     username: z
@@ -36,3 +37,10 @@ export const registerSchema = z
     message: 'Las contraseñas no coinciden',
     path: ['confirm_password'],
   });
+
+  // ✅ Esquema para login
+export const loginSchema = z.object({
+  username: z.string().min(3, 'El nombre de usuario es requerido'),
+  password: z.string().min(1, 'La contraseña es requerida'),
+});
+

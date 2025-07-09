@@ -1,69 +1,101 @@
-import { useState } from 'react';
-import { useRouter } from 'next/router';
-import api from '../services/api';
-import Cookies from 'js-cookie';
+// /frontend/pages/login.tsx
+
+"use client";
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { loginSchema } from '@/schemas/zodSchemas';
 import { useAuth } from '@/contexts/AuthContext';
+import Cookies from 'js-cookie';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 export default function LoginPage() {
+  const { login, isAuthenticated, loading } = useAuth();
   const router = useRouter();
-  const { login } = useAuth();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, loading, router]);
+
+  const onSubmit = async (data: z.infer<typeof loginSchema>) => {
     try {
-      const response = await api.post('/token/', { username, password });
-      // ✅ Guarda tokens
-      Cookies.set('access_token', response.data.access);
-      Cookies.set('refresh_token', response.data.refresh);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}token/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
 
-      // ✅ Guarda el username solo si todo fue exitoso
-      Cookies.set('username', username);
+      if (!response.ok) throw new Error('Credenciales inválidas');
 
-      // ✅ Llama a login pasando también el nombre
-      login(response.data.access, username); // ✅ Actualiza el contexto
+      const result = await response.json();
+      Cookies.set('access_token', result.access);
+      Cookies.set('refresh_token', result.refresh);
+      Cookies.set('username', data.username);
 
-      console.log('✅ Redirecting...');
-      router.push('/'); // ✅ Redirige tras login exitoso
+      login(result.access, data.username);
+      router.push('/');
     } catch (error) {
-      setErrorMsg('Invalid credentials. Please try again.');
+      setErrorMsg('Credenciales incorrectas. Intenta nuevamente.');
     }
   };
 
+  if (loading || isAuthenticated) return null;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <form onSubmit={handleLogin} className="bg-white shadow-md rounded px-8 pt-6 pb-8 w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#0d0d0d] to-[#1a1a1a] text-white">
+      <Navbar />
 
-        {errorMsg && <p className="text-red-500 mb-4">{errorMsg}</p>}
-
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="w-full px-4 py-2 mb-4 border rounded"
-          required
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-4 py-2 mb-6 border rounded"
-          required
-        />
-
-        <button
-          type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      <main className="flex flex-grow items-center justify-center px-4 py-10">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="bg-[#111111] shadow-lg rounded-xl px-8 pt-6 pb-8 w-full max-w-md"
         >
-          Login
-        </button>
-      </form>
+          <h1 className="text-2xl font-bold mb-6 text-center">Iniciar Sesión</h1>
+
+          {errorMsg && <p className="text-red-500 mb-4">{errorMsg}</p>}
+
+          <input
+            type="text"
+            placeholder="Nombre de usuario"
+            {...register('username')}
+            className="w-full px-4 py-2 mb-4 rounded bg-[#1a1a1a] border border-gray-600 text-white"
+          />
+          {errors.username && <p className="text-red-500 text-sm">{errors.username.message}</p>}
+
+          <input
+            type="password"
+            placeholder="Contraseña"
+            {...register('password')}
+            className="w-full px-4 py-2 mb-6 rounded bg-[#1a1a1a] border border-gray-600 text-white"
+          />
+          {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+          >
+            {isSubmitting ? 'Iniciando...' : 'Iniciar sesión'}
+          </button>
+        </form>
+      </main>
+
+      <Footer />
     </div>
   );
 }
