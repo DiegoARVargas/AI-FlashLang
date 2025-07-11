@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
-import Features from "@/components/Features";
+import Advantages from "@/components/Advantages";
+import FeaturesTimeline from "@/components/FeaturesTimeline";
 import CardShowcase from "@/components/CardShowcase";
 import CallToAction from "@/components/CallToAction";
 import Footer from "@/components/Footer";
@@ -10,7 +11,8 @@ export default function Home() {
     <main className="min-h-screen bg-black text-white font-sans">
       <Navbar />
       <Hero />
-      <Features />
+      <Advantages />
+      <FeaturesTimeline />
       <CardShowcase />
       <CallToAction />
       <Footer />

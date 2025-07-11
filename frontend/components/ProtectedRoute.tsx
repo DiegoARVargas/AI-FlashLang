@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
 
-const publicRoutes = ['/', '/login', '/register']; // ✅ ahora incluye /register
+const publicRoutes = ['/', '/login', '/register', '/features']; // ✅ ahora incluye /register
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
