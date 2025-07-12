@@ -29,10 +29,10 @@ export default function ProfileCard({ user, refetch }: Props) {
         body: formData,
       });
 
-      if (!res.ok) throw new Error('Error al subir imagen');
+      if (!res.ok) throw new Error('Error uploading image');
 
-      const updatedUser = await res.json(); // ✅ recibimos el usuario actualizado
-      localStorage.setItem('avatar', updatedUser.avatar || ''); // ✅ guardamos avatar
+      const updatedUser = await res.json();
+      localStorage.setItem('avatar', updatedUser.avatar || '');
       refetch();
     } catch (error) {
       console.error('Error uploading avatar:', error);
@@ -66,9 +66,9 @@ export default function ProfileCard({ user, refetch }: Props) {
         <p className="text-lg font-semibold">{user.display_name || user.username}</p>
         <p className="text-sm text-gray-400">{user.email}</p>
         <p className="text-sm text-green-400 mt-1">
-          Plan: {user.is_premium ? 'Premium' : 'Gratuito'}
+          Plan: {user.is_premium ? 'Premium' : 'Free'}
         </p>
-        {uploading && <p className="text-blue-400 text-sm mt-2">Subiendo imagen...</p>}
+        {uploading && <p className="text-blue-400 text-sm mt-2">Uploading image...</p>}
       </div>
     </div>
   );

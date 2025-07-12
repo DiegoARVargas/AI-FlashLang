@@ -22,7 +22,7 @@ export default function Navbar() {
   return (
     <nav className="w-full bg-black/80 backdrop-blur-sm sticky top-0 z-50 border-b border-neutral-800">
       <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-        {/* Logo: siempre visible */}
+        {/* Logo: always visible */}
         <Link
           href="/"
           className="text-white text-xl font-bold hover:text-purple-400 transition-all duration-300 hover:rotate-[1deg] hover:scale-105"
@@ -30,7 +30,7 @@ export default function Navbar() {
           AIFlashLang
         </Link>
 
-        {/* Navegación */}
+        {/* Navigation */}
         <div className="flex items-center gap-6 text-sm font-medium text-white">
           {!pathname.startsWith("/create") && (
             <Link
@@ -84,7 +84,7 @@ export default function Navbar() {
                   href="/login"
                   className="relative hover:text-[#a855f7] transition duration-200 electric-hover hover:rotate-[1deg] hover:scale-105"
                 >
-                  Iniciar sesión
+                  Log In
                 </Link>
               )}
               {!pathname.startsWith("/register") && (
@@ -92,7 +92,7 @@ export default function Navbar() {
                   href="/register"
                   className="relative hover:text-[#a855f7] transition duration-200 electric-hover hover:rotate-[1deg] hover:scale-105"
                 >
-                  Regístrate
+                  Sign Up
                 </Link>
               )}
             </>

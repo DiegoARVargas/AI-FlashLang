@@ -25,50 +25,50 @@ export default function DeleteAccountSection() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data?.detail || 'Error al eliminar cuenta');
+        throw new Error(data?.detail || 'Failed to delete account');
       }
 
-      // Eliminar cookies de autenticación
+      // Clear auth cookies
       Cookies.remove('access_token');
       Cookies.remove('refresh_token');
       Cookies.remove('username');
 
       router.push('/login');
     } catch (err: any) {
-      setError(err.message || 'Error al eliminar cuenta');
+      setError(err.message || 'Failed to delete account');
     }
   };
 
   return (
     <div className="bg-[#111111] p-6 rounded-xl shadow-lg text-white">
-      <h2 className="text-xl font-semibold mb-2 text-red-400">⚠️ Eliminar Cuenta</h2>
-      <p className="text-sm mb-4">Esta acción es irreversible. Se eliminarán todos tus datos.</p>
+      <h2 className="text-xl font-semibold mb-2 text-red-400">⚠️ Delete Account</h2>
+      <p className="text-sm mb-4">This action is irreversible. All your data will be deleted.</p>
 
       {!confirming ? (
         <button
           onClick={() => setConfirming(true)}
           className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
         >
-          Eliminar mi cuenta
+          Delete my account
         </button>
       ) : (
         <div className="space-y-2">
           <p>
-            ¿Estás seguro? Esta acción{' '}
-            <span className="text-red-500 font-bold">no se puede deshacer</span>.
+            Are you sure? This action{' '}
+            <span className="text-red-500 font-bold">cannot be undone</span>.
           </p>
           <div className="flex gap-4">
             <button
               onClick={handleDelete}
               className="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded"
             >
-              Confirmar eliminación
+              Confirm deletion
             </button>
             <button
               onClick={() => setConfirming(false)}
               className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
             >
-              Cancelar
+              Cancel
             </button>
           </div>
           {error && <p className="text-red-400 mt-2">❌ {error}</p>}

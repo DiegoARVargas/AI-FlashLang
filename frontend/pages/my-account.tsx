@@ -1,6 +1,4 @@
 // /frontend/pages/my-account.tsx
-// Página de "Mi Cuenta" que carga los datos del perfil usando cookies (como en create.tsx)
-
 "use client";
 
 import { useQuery } from '@tanstack/react-query';
@@ -23,8 +21,8 @@ export default function MyAccountPage() {
   } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
-      const token = Cookies.get('access_token'); // ✅ lee de cookies
-      if (!token) throw new Error("Token no encontrado en cookies");
+      const token = Cookies.get('access_token');
+      if (!token) throw new Error("Token not found in cookies");
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}users/me/`, {
         headers: {
@@ -32,11 +30,10 @@ export default function MyAccountPage() {
         },
       });
 
-      if (!res.ok) throw new Error('Error al cargar el perfil');
+      if (!res.ok) throw new Error('Failed to load profile');
 
       const userData = await res.json();
 
-      // ✅ Guarda avatar en localStorage si está disponible
       if (userData.avatar) {
         localStorage.setItem('avatar', userData.avatar);
       } else {
@@ -48,18 +45,18 @@ export default function MyAccountPage() {
   });
 
   useEffect(() => {
-    document.title = 'Mi Cuenta | AI FlashLang';
+    document.title = 'My Account | AI FlashLang';
   }, []);
 
-  if (isLoading) return <p className="text-white text-center">Cargando...</p>;
-  if (error || !data) return <p className="text-red-500 text-center">Error al cargar tu perfil.</p>;
+  if (isLoading) return <p className="text-white text-center">Loading...</p>;
+  if (error || !data) return <p className="text-red-500 text-center">Error loading your profile.</p>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0d0d0d] to-[#1a1a1a] text-white">
       <Navbar />
 
       <div className="max-w-4xl mx-auto p-4 space-y-10">
-        <h1 className="text-4xl font-extrabold mb-10 text-white">Mi Cuenta</h1>
+        <h1 className="text-4xl font-extrabold mb-10 text-white">My Account</h1>
 
         <section className="grid md:grid-cols-2 gap-6 items-start">
           <ProfileCard user={data} refetch={refetch} />

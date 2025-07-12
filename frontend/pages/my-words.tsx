@@ -61,7 +61,7 @@ export default function MyWordsPage() {
 
   const handleDeleteSelected = async () => {
     if (!selectedIds.length) return;
-    const confirmed = confirm("⚠️ ¿Estás seguro de que deseas eliminar las palabras seleccionadas?");
+    const confirmed = confirm("⚠️ Are you sure you want to delete the selected words?");
     if (!confirmed) return;
 
     const token = Cookies.get("access_token");
@@ -103,7 +103,7 @@ export default function MyWordsPage() {
     });
 
     if (!res.ok) {
-      alert("❌ No se pudo descargar el mazo seleccionado.");
+      alert("❌ Failed to download selected deck.");
       return;
     }
 
@@ -129,13 +129,13 @@ export default function MyWordsPage() {
   const getWordText = (entry: WordEntry) => {
     if (entry.custom_content?.word) return entry.custom_content.word;
     if (entry.shared_word?.word) return entry.shared_word.word;
-    return "❌ Palabra inválida";
+    return "❌ Invalid word";
   };
 
   const getTranslationText = (entry: WordEntry) => {
     if (entry.custom_content?.translation) return entry.custom_content.translation;
     if (entry.shared_word?.translation) return entry.shared_word.translation;
-    return "❌ Sin traducción";
+    return "❌ No translation";
   };
 
   const totalPages = Math.ceil(filteredWords.length / itemsPerPage);
@@ -148,18 +148,18 @@ export default function MyWordsPage() {
     <div className="p-8 bg-black text-white min-h-screen">
       <Navbar />
 
-      <h1 className="text-3xl font-bold mb-4">Mis Palabras</h1>
+      <h1 className="text-3xl font-bold mb-4">My Words</h1>
 
       {hasOrphanWords && (
         <div className="bg-yellow-900 text-yellow-300 p-4 rounded mb-6 border border-yellow-600">
-          ⚠️ Algunas palabras están incompletas (no tienen contenido compartido ni personalizado).
+          ⚠️ Some words are incomplete (missing shared or custom content).
         </div>
       )}
 
       <div className="flex gap-4 mb-6">
         <input
           type="text"
-          placeholder="Filtrar por nombre del deck"
+          placeholder="Filter by deck name"
           value={deckFilter}
           onChange={(e) => setDeckFilter(e.target.value)}
           className="p-2 bg-neutral-800 text-white rounded border border-purple-500"
@@ -168,17 +168,17 @@ export default function MyWordsPage() {
           className="bg-red-700 hover:bg-red-800 text-white px-4 rounded"
           onClick={handleDeleteSelected}
         >
-          Eliminar seleccionadas
+          Delete Selected
         </button>
         <button
           className="bg-blue-700 hover:bg-blue-800 text-white px-4 rounded"
           onClick={handleDownloadSelected}
         >
-          Descargar seleccionadas
+          Download Selected
         </button>
         <input
           type="text"
-          placeholder="Nombre para el nuevo deck (opcional)"
+          placeholder="Name for new deck (optional)"
           value={newDeckName}
           onChange={(e) => setNewDeckName(e.target.value)}
           className="p-2 bg-neutral-800 text-white rounded border border-blue-500"
@@ -189,7 +189,7 @@ export default function MyWordsPage() {
             checked={allowDuplicates}
             onChange={(e) => setAllowDuplicates(e.target.checked)}
           />
-          Permitir duplicados
+          Allow duplicates
         </label>
       </div>
 
@@ -210,7 +210,7 @@ export default function MyWordsPage() {
               <th className="p-2">Word</th>
               <th className="p-2">Translation</th>
               <th className="p-2">Deck</th>
-              <th className="p-2">Creado</th>
+              <th className="p-2">Created</th>
             </tr>
           </thead>
           <tbody>
@@ -235,7 +235,7 @@ export default function MyWordsPage() {
         </table>
       </div>
 
-      {/* Paginación */}
+      {/* Pagination */}
       <div className="flex justify-center gap-2 mt-6">
         {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
           <button

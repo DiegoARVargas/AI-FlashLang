@@ -6,15 +6,15 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useState } from 'react';
 
-// Esquema de validación para cambiar contraseña
+// Validation schema for changing password
 const schema = z
   .object({
-    current_password: z.string().min(6, 'Debe tener al menos 6 caracteres'),
-    new_password: z.string().min(6, 'Debe tener al menos 6 caracteres'),
-    confirm_password: z.string().min(6, 'Debe tener al menos 6 caracteres'),
+    current_password: z.string().min(6, 'Must be at least 6 characters'),
+    new_password: z.string().min(6, 'Must be at least 6 characters'),
+    confirm_password: z.string().min(6, 'Must be at least 6 characters'),
   })
   .refine((data) => data.new_password === data.confirm_password, {
-    message: 'Las contraseñas no coinciden',
+    message: 'Passwords do not match',
     path: ['confirm_password'],
   });
 
@@ -57,16 +57,16 @@ export default function ChangePasswordForm() {
     } catch (error: any) {
       console.error(error);
       setSuccess(false);
-      setErrorMsg('Error al cambiar contraseña. Verifica tu contraseña actual.');
+      setErrorMsg('Error changing password. Please check your current password.');
     }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="bg-[#111111] p-6 rounded-xl shadow-lg space-y-4 mt-10">
-      <h2 className="text-xl font-semibold mb-2">Cambiar Contraseña</h2>
+      <h2 className="text-xl font-semibold mb-2">Change Password</h2>
 
       <div>
-        <label className="block text-sm mb-1">Contraseña Actual</label>
+        <label className="block text-sm mb-1">Current Password</label>
         <input
           type="password"
           {...register('current_password')}
@@ -76,7 +76,7 @@ export default function ChangePasswordForm() {
       </div>
 
       <div>
-        <label className="block text-sm mb-1">Nueva Contraseña</label>
+        <label className="block text-sm mb-1">New Password</label>
         <input
           type="password"
           {...register('new_password')}
@@ -86,7 +86,7 @@ export default function ChangePasswordForm() {
       </div>
 
       <div>
-        <label className="block text-sm mb-1">Confirmar Nueva Contraseña</label>
+        <label className="block text-sm mb-1">Confirm New Password</label>
         <input
           type="password"
           {...register('confirm_password')}
@@ -96,14 +96,14 @@ export default function ChangePasswordForm() {
       </div>
 
       {errorMsg && <p className="text-red-400 text-sm">{errorMsg}</p>}
-      {success && <p className="text-green-400 text-sm">✅ Contraseña cambiada correctamente</p>}
+      {success && <p className="text-green-400 text-sm">✅ Password changed successfully</p>}
 
       <button
         type="submit"
         disabled={isSubmitting}
         className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded"
       >
-        Cambiar Contraseña
+        Change Password
       </button>
     </form>
   );

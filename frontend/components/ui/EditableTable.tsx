@@ -30,7 +30,7 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
   const [targetLang, setTargetLang] = useState<number>(languages[1]?.id || 2);
   const [context, setContext] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [generatedIds, setGeneratedIds] = useState<number[]>([]); // 🆕 Agregado para almacenar los IDs generados
+  const [generatedIds, setGeneratedIds] = useState<number[]>([]);
 
   const updateCell = (
     index: number,
@@ -48,15 +48,12 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
   };
 
   const addRow = () => {
-    setRows([
-      ...rows,
-      { word: "", translation: "", example: "", exampleTrans: "", deck: "" },
-    ]);
+    setRows([...rows, { word: "", translation: "", example: "", exampleTrans: "", deck: "" }]);
   };
 
   const clearAllRows = () => {
     setRows([]);
-    setGeneratedIds([]); // 🆕 Limpiar también los IDs generados
+    setGeneratedIds([]);
   };
 
   const applyGlobalsToRows = () => {
@@ -67,7 +64,7 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
       context,
     }));
     setRows(updated);
-    alert("🌍 Valores globales aplicados a todas las filas.");
+    alert("🌍 Global values applied to all rows.");
   };
 
   const handleGenerateAll = async () => {
@@ -95,7 +92,7 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
           const data = await response.json();
           const content = data.shared_word || data.custom_content;
 
-          setGeneratedIds((prev) => [...prev, data.id]); // 🆕 Guardar ID
+          setGeneratedIds((prev) => [...prev, data.id]);
 
           return {
             ...row,
@@ -106,20 +103,20 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
             audioSentenceUrl: content.audio_sentence,
           };
         } catch (err) {
-          console.error("❌ Error generando fila:", row.word);
+          console.error("❌ Error generating row:", row.word);
           return row;
         }
       })
     );
 
     setRows(newRows);
-    alert("✅ Generación masiva finalizada");
+    alert("✅ Bulk generation complete");
     setLoading(false);
   };
 
-  const handleDownloadDeck = async () => { // 🆕 Nueva función para descarga
+  const handleDownloadDeck = async () => {
     if (generatedIds.length === 0) {
-      alert("⚠️ No hay palabras generadas para descargar.");
+      alert("⚠️ No generated words to download.");
       return;
     }
 
@@ -134,7 +131,7 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
         body: JSON.stringify({ ids: generatedIds }),
       });
 
-      if (!response.ok) throw new Error("Error al generar el mazo");
+      if (!response.ok) throw new Error("Error generating deck");
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -145,10 +142,10 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      alert("📦 Mazo descargado correctamente");
+      alert("📦 Deck downloaded successfully");
     } catch (err) {
-      console.error("❌ Error al descargar mazo", err);
-      alert("Error al descargar el mazo.");
+      console.error("❌ Error downloading deck", err);
+      alert("Error downloading the deck.");
     }
   };
 
@@ -177,33 +174,33 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
           type="text"
           value={context}
           onChange={(e) => setContext(e.target.value)}
-          placeholder="Context (opcional)"
+          placeholder="Context (optional)"
           className="p-2 bg-neutral-800 text-white rounded border border-purple-500 flex-1"
         />
         <button
           onClick={applyGlobalsToRows}
           className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm"
         >
-          Aplicar a todas las filas
+          Apply to All Rows
         </button>
         <button
           onClick={handleGenerateAll}
           className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded text-sm disabled:opacity-40"
           disabled={loading}
         >
-          {loading ? "Generando..." : "Generar Todo"}
+          {loading ? "Generating..." : "Generate All"}
         </button>
         <button
           onClick={clearAllRows}
           className="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded text-sm"
         >
-          Limpiar Todo
+          Clear All
         </button>
         <button
-          onClick={handleDownloadDeck} // 🆕 Botón de descarga
+          onClick={handleDownloadDeck}
           className="bg-[#2323ff] hover:bg-blue-700 text-white px-4 py-2 rounded text-sm"
         >
-          📦 Descargar Mazo
+          📦 Download Deck
         </button>
       </div>
 
@@ -269,7 +266,7 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
                   onClick={() => removeRow(i)}
                   className="text-red-400 hover:text-red-600"
                 >
-                  Eliminar
+                  Delete
                 </button>
               </td>
             </tr>
@@ -282,7 +279,7 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
           onClick={addRow}
           className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm"
         >
-          + Agregar fila
+          + Add Row
         </button>
       </div>
     </div>

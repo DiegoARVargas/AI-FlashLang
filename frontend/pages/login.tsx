@@ -40,7 +40,7 @@ export default function LoginPage() {
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) throw new Error('Credenciales inválidas');
+      if (!response.ok) throw new Error('Invalid credentials');
 
       const result = await response.json();
       Cookies.set('access_token', result.access);
@@ -50,7 +50,7 @@ export default function LoginPage() {
       login(result.access, data.username);
       router.push('/');
     } catch (error) {
-      setErrorMsg('Credenciales incorrectas. Intenta nuevamente.');
+      setErrorMsg('Incorrect credentials. Please try again.');
     }
   };
 
@@ -65,13 +65,13 @@ export default function LoginPage() {
           onSubmit={handleSubmit(onSubmit)}
           className="bg-[#111111] shadow-lg rounded-xl px-8 pt-6 pb-8 w-full max-w-md"
         >
-          <h1 className="text-2xl font-bold mb-6 text-center">Iniciar Sesión</h1>
+          <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
 
           {errorMsg && <p className="text-red-500 mb-4">{errorMsg}</p>}
 
           <input
             type="text"
-            placeholder="Nombre de usuario"
+            placeholder="Username"
             {...register('username')}
             className="w-full px-4 py-2 mb-4 rounded bg-[#1a1a1a] border border-gray-600 text-white"
           />
@@ -79,7 +79,7 @@ export default function LoginPage() {
 
           <input
             type="password"
-            placeholder="Contraseña"
+            placeholder="Password"
             {...register('password')}
             className="w-full px-4 py-2 mb-6 rounded bg-[#1a1a1a] border border-gray-600 text-white"
           />
@@ -90,7 +90,7 @@ export default function LoginPage() {
             disabled={isSubmitting}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
           >
-            {isSubmitting ? 'Iniciando...' : 'Iniciar sesión'}
+            {isSubmitting ? 'Logging in...' : 'Log in'}
           </button>
         </form>
       </main>

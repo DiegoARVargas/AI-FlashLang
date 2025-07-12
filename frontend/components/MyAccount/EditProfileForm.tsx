@@ -46,7 +46,7 @@ export default function EditProfileForm({ user, refetch }: Props) {
           { id: 2, code: 'es', name: 'Español' },
           { id: 3, code: 'fr', name: 'Français' },
         ])
-      );      
+      );
   }, [user, setValue]);
 
   const onSubmit = async (data: EditProfileFormData) => {
@@ -64,7 +64,7 @@ export default function EditProfileForm({ user, refetch }: Props) {
         }),
       });
 
-      if (!res.ok) throw new Error('Error actualizando perfil');
+      if (!res.ok) throw new Error('Error updating profile');
 
       setSuccess(true);
       refetch();
@@ -76,10 +76,10 @@ export default function EditProfileForm({ user, refetch }: Props) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="bg-[#111111] p-6 rounded-xl shadow-lg space-y-4">
-      <h2 className="text-xl font-semibold mb-2">Editar Perfil</h2>
+      <h2 className="text-xl font-semibold mb-2">Edit Profile</h2>
 
       <div>
-        <label className="block text-sm mb-1">Nombre Visible</label>
+        <label className="block text-sm mb-1">Display Name</label>
         <input
           {...register('display_name')}
           className="w-full p-2 rounded bg-[#1a1a1a] border border-gray-600 text-white"
@@ -88,7 +88,7 @@ export default function EditProfileForm({ user, refetch }: Props) {
       </div>
 
       <div>
-        <label className="block text-sm mb-1">Idioma Preferido</label>
+        <label className="block text-sm mb-1">Preferred Language</label>
         <select
           {...register('preferred_language')}
           className="w-full p-2 rounded bg-[#1a1a1a] border border-gray-600 text-white"
@@ -109,10 +109,10 @@ export default function EditProfileForm({ user, refetch }: Props) {
         disabled={isSubmitting}
         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
       >
-        Guardar Cambios
+        Save Changes
       </button>
 
-      {success && <p className="text-green-400 mt-2">✅ Cambios guardados</p>}
+      {success && <p className="text-green-400 mt-2">✅ Changes saved</p>}
     </form>
   );
 }

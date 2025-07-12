@@ -45,12 +45,12 @@ export default function CreatePage() {
           },
         });
 
-        if (!res.ok) throw new Error("Error al cargar lenguajes");
+        if (!res.ok) throw new Error("Error loading languages");
 
         const data = await res.json();
         setLanguages(data);
       } catch (err) {
-        setErrorMsg("No se pudieron cargar los lenguajes. Verifica tu autenticación.");
+        setErrorMsg("Could not load languages. Please check your authentication.");
         console.error(err);
       }
     };
@@ -77,14 +77,14 @@ export default function CreatePage() {
         }),
       });
 
-      if (res.status === 401) throw new Error("Token inválido o expirado. Inicia sesión nuevamente.");
-      if (res.status === 403) throw new Error("No tienes permisos para usar esta función (¿quizás contexto premium?)");
+      if (res.status === 401) throw new Error("Invalid or expired token. Please log in again.");
+      if (res.status === 403) throw new Error("You do not have permission to use this feature (perhaps premium context?)");
 
       const data = await res.json();
       const content = data.shared_word || data.custom_content;
 
       if (!content) {
-        throw new Error("La respuesta del servidor no contiene datos válidos.");
+        throw new Error("Server response did not contain valid data.");
       }
 
       setResult({
@@ -97,7 +97,7 @@ export default function CreatePage() {
         audio_sentence_url: content.audio_sentence,
       });
     } catch (err: any) {
-      setErrorMsg(err.message || "Error al generar palabra.");
+      setErrorMsg(err.message || "Error generating word.");
       console.error("Error:", err);
     } finally {
       setLoading(false);
@@ -105,7 +105,7 @@ export default function CreatePage() {
   };
 
   const handleSave = () => {
-    console.log("✅ Palabra guardada. Acción futura.");
+    console.log("✅ Word saved. Future action.");
   };
 
   return (
@@ -115,7 +115,7 @@ export default function CreatePage() {
         <main className="min-h-screen bg-black text-white p-6">
           <div className="flex flex-col lg:flex-row justify-between gap-12 items-start w-full max-w-7xl mx-auto">
             <div className="w-full lg:w-1/2">
-              <h1 className="text-3xl font-bold mb-6">Crear nueva palabra</h1>
+              <h1 className="text-3xl font-bold mb-6">Create New Word</h1>
 
               {errorMsg && (
                 <div className="bg-red-800 text-red-200 p-4 rounded mb-6">
@@ -167,7 +167,7 @@ export default function CreatePage() {
 
                 <input
                   type="text"
-                  placeholder="Nombre del mazo (deck)"
+                  placeholder="Deck name"
                   value={deck}
                   onChange={(e) => setDeck(e.target.value)}
                   className="w-full p-2 rounded bg-neutral-900 border border-neutral-700"
@@ -178,7 +178,7 @@ export default function CreatePage() {
                   disabled={loading || !word}
                   className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-white font-bold disabled:opacity-50"
                 >
-                  {loading ? "Generando..." : "Generar"}
+                  {loading ? "Generating..." : "Generate"}
                 </button>
               </div>
             </div>
@@ -201,12 +201,12 @@ export default function CreatePage() {
             )}
           </div>
 
-          {/* Línea divisoria */}
+          {/* Divider */}
           <div className="w-full border-t border-blue-500/40 my-12" />
 
-          {/* Carga Masiva */}
+          {/* Bulk Upload */}
           <div className="w-full max-w-7xl mx-auto mb-16">
-            <h2 className="text-3xl font-bold mb-4">Carga Masiva de Palabras (.csv)</h2>
+            <h2 className="text-3xl font-bold mb-4">Bulk Upload (.csv)</h2>
 
             <div
               className="w-full p-10 border-2 border-dashed border-purple-500/40 rounded-xl text-center bg-neutral-900 text-neutral-300 hover:border-purple-500 transition cursor-pointer"
@@ -215,15 +215,15 @@ export default function CreatePage() {
                 e.preventDefault();
                 const file = e.dataTransfer.files?.[0];
                 if (file && file.name.endsWith(".csv")) {
-                  alert(`📁 Archivo recibido: ${file.name}`);
+                  alert(`📁 File received: ${file.name}`);
                 } else {
-                  alert("❌ Solo se permiten archivos CSV.");
+                  alert("❌ Only CSV files are allowed.");
                 }
               }}
               onClick={() => document.getElementById("csvInput")?.click()}
             >
-              <p className="text-lg">Arrastra aquí tu archivo .csv o haz clic para seleccionarlo</p>
-              <p className="text-sm text-neutral-500 mt-2">Formato: word, source_lang_id, target_lang_id, context, deck</p>
+              <p className="text-lg">Drag your .csv file here or click to select</p>
+              <p className="text-sm text-neutral-500 mt-2">Format: word, source_lang_id, target_lang_id, context, deck</p>
             </div>
 
             <input
@@ -234,20 +234,20 @@ export default function CreatePage() {
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file && file.name.endsWith(".csv")) {
-                  alert(`📁 Archivo seleccionado: ${file.name}`);
+                  alert(`📁 File selected: ${file.name}`);
                 } else {
-                  alert("❌ Solo se permiten archivos CSV.");
+                  alert("❌ Only CSV files are allowed.");
                 }
               }}
             />
           </div>
 
-          {/* Línea divisoria */}
+          {/* Divider */}
           <div className="w-full border-t border-blue-500/40 my-12" />
 
-          {/* Carga Manual tipo Excel */}
+          {/* Manual Upload Excel Style */}
           <div className="w-full max-w-7xl mx-auto mb-12">
-            <h2 className="text-3xl font-bold mb-4 text-white">Carga Manual</h2>
+            <h2 className="text-3xl font-bold mb-4 text-white">Manual Upload</h2>
             <EditableTable languages={languages} />
           </div>
         </main>
