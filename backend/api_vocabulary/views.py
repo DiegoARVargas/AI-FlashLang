@@ -3,13 +3,15 @@ from rest_framework.decorators import action
 from django.http import FileResponse, Http404
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.http import HttpResponse
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser
 from django.db.models import Q
 from .models import UserVocabularyWord, SharedVocabularyWord, CustomWordContent, Language
 from .serializers import UserVocabularyWordSerializer, LanguageSerializer
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from openai import OpenAI
-import os
+import os, io, csv
 import re
 from google.cloud import translate_v2 as gcloud_translate
 #from deep_translator import GoogleTranslator
@@ -291,3 +293,105 @@ class GenerateAudioView(APIView):
             return Response({"message": "Audios generados correctamente."}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": f"Error al generar audios: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class BulkUploadView(APIView):
+    parser_classes = [MultiPartParser]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        uploaded_file = request.FILES.get('file')
+        if not uploaded_file or not uploaded_file.name.endswith('.csv'):
+            return Response({'error': 'Debes subir un archivo .csv válido.'}, status=400)
+
+        decoded_file = uploaded_file.read().decode('utf-8')
+        csv_reader = csv.DictReader(io.StringIO(decoded_file))
+
+        # ✅ Validación de encabezados
+        expected_fields = {"word", "source_lang_code", "target_lang_code"}
+        missing_fields = expected_fields - set(csv_reader.fieldnames)
+
+        if missing_fields:
+            return Response(
+                {
+                    "error": f"El archivo CSV debe tener los siguientes encabezados: {', '.join(expected_fields)}. "
+                             f"Faltan: {', '.join(missing_fields)}"
+                },
+                status=400
+            )
+
+        rows = list(csv_reader)
+        if len(rows) > 50:
+            return Response({'error': 'No puedes subir más de 50 palabras por archivo.'}, status=400)
+
+        creator = UserVocabularyWordViewSet()
+        creator.request = request
+
+        results = []
+        for idx, row in enumerate(rows, start=2):  # empieza en 2 por encabezado
+
+            word = row.get("word", "").strip().lower()
+            source_lang_code = row.get("source_lang_code", "").strip().lower()
+            target_lang_code = row.get("target_lang_code", "").strip().lower()
+            deck = row.get("deck", "").strip() or "MyDeck"
+
+            if not word or not source_lang_code or not target_lang_code:
+                results.append({'line': idx, 'word': word, 'status': 'error', 'reason': 'Campos requeridos vacíos'})
+                continue
+
+            try:
+                source_lang = Language.objects.get(code=source_lang_code)
+                target_lang = Language.objects.get(code=target_lang_code)
+            except Language.DoesNotExist:
+                results.append({'line': idx, 'word': word, 'status': 'error', 'reason': 'Código de idioma inválido'})
+                continue
+
+            try:
+                with transaction.atomic():
+                    shared = SharedVocabularyWord.objects.filter(
+                        word=word,
+                        source_lang=source_lang,
+                        target_lang=target_lang
+                    ).first()
+
+                    if not shared:
+                        shared = SharedVocabularyWord.objects.create(
+                            word=word,
+                            source_lang=source_lang,
+                            target_lang=target_lang
+                        )
+                        creator.generate_content_for_shared(shared)
+
+                    UserVocabularyWord.objects.get_or_create(
+                        user=request.user,
+                        shared_word=shared,
+                        deck=deck
+                    )
+                    results.append({'line': idx, 'word': word, 'status': 'ok'})
+
+            except Exception as e:
+                results.append({'line': idx, 'word': word, 'status': 'error', 'reason': str(e)})
+
+        success = sum(1 for r in results if r['status'] == 'ok')
+        errors = [r for r in results if r['status'] == 'error']
+
+        return Response({
+            'message': 'Carga masiva completada.',
+            'total': len(rows),
+            'success': success,
+            'errors': errors
+        }, status=status.HTTP_207_MULTI_STATUS)
+    
+class BulkUploadTemplateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Encabezados esperados por el sistema
+        headers = ['word', 'source_lang_code', 'target_lang_code', 'deck']
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="bulk_upload_template.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(headers)  # Solo la fila de encabezados
+
+        return response
