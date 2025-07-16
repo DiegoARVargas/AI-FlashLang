@@ -20,7 +20,7 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="w-full bg-black/80 backdrop-blur-sm sticky top-0 z-50 border-b border-neutral-800">
+    <nav className="w-full bg-neutral-800 sticky top-0 z-50 border-b border-neutral-800">
       <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo: always visible */}
         <Link
