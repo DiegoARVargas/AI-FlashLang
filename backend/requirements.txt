@@ -20,7 +20,7 @@ frozendict==2.4.6
 genanki==0.13.1
 gTTS==2.5.4
 gunicorn==23.0.0
-h11==0.14.0
+h11==0.16.0
 h2==3.2.0
 hpack==3.0.0
 hstspreload==2025.1.1
