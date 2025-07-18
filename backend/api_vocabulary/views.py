@@ -306,9 +306,12 @@ class BulkUploadView(APIView):
         decoded_file = uploaded_file.read().decode('utf-8')
         csv_reader = csv.DictReader(io.StringIO(decoded_file))
 
-        # ✅ Validación de encabezados
+        # ✅ Limpieza segura de encabezados
+        cleaned_headers = [h.strip().replace('\ufeff', '').lower() for h in csv_reader.fieldnames]
+        csv_reader.fieldnames = cleaned_headers
+
         expected_fields = {"word", "source_lang_code", "target_lang_code"}
-        missing_fields = expected_fields - set(csv_reader.fieldnames)
+        missing_fields = expected_fields - set(cleaned_headers)
 
         if missing_fields:
             return Response(
@@ -330,8 +333,8 @@ class BulkUploadView(APIView):
         for idx, row in enumerate(rows, start=2):  # empieza en 2 por encabezado
 
             word = row.get("word", "").strip().lower()
-            source_lang_code = row.get("source_lang_code", "").strip().lower()
-            target_lang_code = row.get("target_lang_code", "").strip().lower()
+            source_lang_code = row.get("source_lang_code", "").strip().replace("\ufeff", "")
+            target_lang_code = row.get("target_lang_code", "").strip().replace("\ufeff", "")
             deck = row.get("deck", "").strip() or "MyDeck"
 
             if not word or not source_lang_code or not target_lang_code:
