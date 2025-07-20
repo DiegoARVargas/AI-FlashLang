@@ -41,7 +41,12 @@ class RegisterUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ("username", "email", "password", "confirm_password", "display_name", "preferred_language")
+        fields = ("email", "username", "password", "confirm_password", "display_name", "preferred_language")
+
+    def validate_email(self, value):
+        if CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Ya existe un usuario con este correo electrónico.")
+        return value
 
     def validate(self, data):
         if data["password"] != data["confirm_password"]:
@@ -51,12 +56,10 @@ class RegisterUserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop("confirm_password")
-        user = CustomUser(
-            username=validated_data["username"],
+        return CustomUser.objects.create_user(
             email=validated_data["email"],
+            username=validated_data.get("username", ""),
             display_name=validated_data.get("display_name", ""),
             preferred_language=validated_data.get("preferred_language", "es"),
+            password=validated_data["password"]
         )
-        user.set_password(validated_data["password"])
-        user.save()
-        return user
