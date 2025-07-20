@@ -45,6 +45,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_premium = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
+    is_email_verified = models.BooleanField(default=False)
 
     objects = CustomUserManager()
 
