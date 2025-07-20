@@ -1,3 +1,6 @@
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
+from django.contrib.auth.tokens import default_token_generator
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
@@ -6,6 +9,7 @@ from rest_framework import status
 from .serializers import UserMeSerializer, DownloadHistorySerializer, ChangePasswordSerializer, RegisterUserSerializer
 from .models import CustomUser
 from api_vocabulary.models import DownloadHistory
+from .utils import send_verification_email
 
 class UserMeView(APIView):
     permission_classes = [IsAuthenticated]
@@ -66,6 +70,8 @@ class RegisterUserView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
+        send_verification_email(request, user)
+
         refresh = RefreshToken.for_user(user)
         return Response({
             "refresh": str(refresh),
@@ -75,5 +81,26 @@ class RegisterUserView(APIView):
                 "email": user.email,
                 "display_name": user.display_name,
                 "preferred_language": user.preferred_language,
-            }
+            },
+            "message": "Te hemos enviado un correo para verificar tu cuenta.",
         }, status=status.HTTP_201_CREATED)
+    
+class VerifyEmailView(APIView):
+    permission_classes = []
+
+    def get(self, request, uidb64, token):
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = CustomUser.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+            return Response({"error": "Enlace de verificación inválido."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if user.is_active:
+            return Response({"message": "Tu correo ya ha sido verificado."}, status=status.HTTP_200_OK)
+
+        if default_token_generator.check_token(user, token):
+            user.is_active = True
+            user.save()
+            return Response({"message": "Correo verificado correctamente. Ya puedes iniciar sesión."}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Token inválido o expirado."}, status=status.HTTP_400_BAD_REQUEST)

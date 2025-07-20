@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Verifica tu correo | FlashLang</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #333;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 12px 24px;
+            background-color: #8b5cf6;
+            color: white !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .footer {
+            font-size: 12px;
+            color: #999;
+            margin-top: 40px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="logo">
+        <h2>🔡 FlashLang</h2>
+    </div>
+
+    <p>Hola {{ user.display_name|default:user.email }},</p>
+
+    <p>¡Gracias por registrarte en <strong>AI FlashLang</strong>! Para comenzar a usar la plataforma, por favor verifica tu dirección de correo electrónico haciendo clic en el siguiente botón:</p>
+
+    <p style="text-align: center;">
+        <a href="{{ verification_link }}" class="button">Verificar correo</a>
+    </p>
+
+    <p>Si tú no creaste esta cuenta, simplemente ignora este mensaje.</p>
+
+    <div class="footer">
+        &copy; {{ current_year|default:"2025" }} FlashLang. Todos los derechos reservados.
+    </div>
+</div>
+</body>
+</html>
