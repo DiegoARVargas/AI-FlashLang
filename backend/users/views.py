@@ -10,6 +10,10 @@ from .serializers import UserMeSerializer, DownloadHistorySerializer, ChangePass
 from .models import CustomUser
 from api_vocabulary.models import DownloadHistory
 from .utils import send_verification_email
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .token_serializers import CustomTokenObtainPairSerializer
+from django.shortcuts import redirect
+import os
 
 class UserMeView(APIView):
     permission_classes = [IsAuthenticated]
@@ -86,21 +90,24 @@ class RegisterUserView(APIView):
         }, status=status.HTTP_201_CREATED)
     
 class VerifyEmailView(APIView):
-    permission_classes = []
+    permission_classes = [AllowAny]
 
     def get(self, request, uidb64, token):
         try:
-            uid = force_str(urlsafe_base64_decode(uidb64))
+            uid = force_str(urlsafe_base64_decode(uidb64).decode())
             user = CustomUser.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
-            return Response({"error": "Enlace de verificación inválido."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if user.is_active:
-            return Response({"message": "Tu correo ya ha sido verificado."}, status=status.HTTP_200_OK)
+            return Response({"error": "Enlace inválido"}, status=status.HTTP_400_BAD_REQUEST)
 
         if default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
-            return Response({"message": "Correo verificado correctamente. Ya puedes iniciar sesión."}, status=status.HTTP_200_OK)
-        else:
-            return Response({"error": "Token inválido o expirado."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ✅ Redirigir al frontend tras verificación
+            frontend_url = os.getenv("FRONTEND_VERIFY_SUCCESS_URL", "http://localhost:3000/verified")
+            return redirect(frontend_url)
+
+        return Response({"error": "Token inválido o expirado"}, status=status.HTTP_400_BAD_REQUEST)
+        
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer

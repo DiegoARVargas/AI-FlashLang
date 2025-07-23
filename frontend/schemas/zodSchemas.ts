@@ -40,7 +40,7 @@ export const registerSchema = z
 
   // ✅ Esquema para login
 export const loginSchema = z.object({
-  username: z.string().min(3, 'El nombre de usuario es requerido'),
-  password: z.string().min(1, 'La contraseña es requerida'),
+  email: z.string().email("Invalid email"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 

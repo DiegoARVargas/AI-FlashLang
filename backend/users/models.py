@@ -51,6 +51,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = "email"  # El campo que se usará para login
     REQUIRED_FIELDS = ["username"]  # Campo obligatorio adicional
+    EMAIL_FIELD = "email"
 
 
     def __str__(self):

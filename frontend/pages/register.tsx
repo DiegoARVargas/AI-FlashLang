@@ -43,14 +43,7 @@ export default function RegisterPage() {
 
       if (!res.ok) throw new Error('Error registering user');
 
-      const result = await res.json();
-      Cookies.set('access_token', result.access);
-      Cookies.set('refresh_token', result.refresh);
-      Cookies.set('username', result.user.username);
-      localStorage.setItem('avatar', result.user.avatar || '');
-
-      login(result.access, result.user.username);
-      router.push('/');
+      setErrorMsg("Account created! Please verify your email before logging in.");
     } catch (err) {
       setErrorMsg('Registration failed. Please try again.');
     }

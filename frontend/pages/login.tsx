@@ -34,20 +34,32 @@ export default function LoginPage() {
 
   const onSubmit = async (data: z.infer<typeof loginSchema>) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}token/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}users/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),        
       });
 
-      if (!response.ok) throw new Error('Invalid credentials');
-
       const result = await response.json();
+
+      if (!response.ok) {
+        // 🔐 Manejo de errores personalizados aquí
+        if (result?.detail === "Debes verificar tu correo electrónico antes de iniciar sesión.") {
+          setErrorMsg("Por favor verifica tu correo antes de iniciar sesión.");
+        } else {
+          setErrorMsg("Credenciales incorrectas. Intenta nuevamente.");
+        }
+        return;
+      }
+
       Cookies.set('access_token', result.access);
       Cookies.set('refresh_token', result.refresh);
-      Cookies.set('username', data.username);
+      Cookies.set('username', data.email);
 
-      login(result.access, data.username);
+      login(result.access, data.email);
       router.push('/');
     } catch (error) {
       setErrorMsg('Incorrect credentials. Please try again.');
@@ -70,12 +82,12 @@ export default function LoginPage() {
           {errorMsg && <p className="text-red-500 mb-4">{errorMsg}</p>}
 
           <input
-            type="text"
-            placeholder="Username"
-            {...register('username')}
+            type="email"
+            placeholder="Email"
+            {...register('email')}
             className="w-full px-4 py-2 mb-4 rounded bg-[#1a1a1a] border border-gray-600 text-white"
           />
-          {errors.username && <p className="text-red-500 text-sm">{errors.username.message}</p>}
+          {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
 
           <input
             type="password"
