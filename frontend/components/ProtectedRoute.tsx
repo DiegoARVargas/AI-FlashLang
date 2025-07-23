@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
 
-const publicRoutes = ['/', '/login', '/register', '/features', '/verified']; // Define public routes that do not require authentication
+const publicRoutes = ['/', '/login', '/register', '/features', '/verified', '/resend-verification']; // Define public routes that do not require authentication
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();

@@ -6,7 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
-from .serializers import UserMeSerializer, DownloadHistorySerializer, ChangePasswordSerializer, RegisterUserSerializer
+from .serializers import UserMeSerializer, DownloadHistorySerializer, ChangePasswordSerializer, RegisterUserSerializer, ResendVerificationSerializer
 from .models import CustomUser
 from api_vocabulary.models import DownloadHistory
 from .utils import send_verification_email
@@ -111,3 +111,12 @@ class VerifyEmailView(APIView):
         
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+class ResendVerificationView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = ResendVerificationSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Correo de verificación reenviado correctamente."}, status=status.HTTP_200_OK)

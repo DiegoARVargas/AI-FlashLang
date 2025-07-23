@@ -104,6 +104,12 @@ export default function LoginPage() {
           >
             {isSubmitting ? 'Logging in...' : 'Log in'}
           </button>
+          <p className="mt-4 text-sm text-center text-gray-400">
+            Didn't receive the verification email?{" "}
+            <a href="/resend-verification" className="text-purple-400 hover:underline font-medium">
+              Resend it
+            </a>
+          </p>
         </form>
       </main>
 

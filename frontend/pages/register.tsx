@@ -91,6 +91,12 @@ export default function RegisterPage() {
               Log in
             </Link>
           </p>
+          <p className="mt-2 text-sm text-center text-gray-400">
+            Didn't you receive the verification email?{" "}
+            <a href="/resend-verification" className="text-purple-400 hover:underline font-medium">
+              Resend email
+            </a>
+          </p>
         </form>
       </div>
 

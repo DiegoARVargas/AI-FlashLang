@@ -1,6 +1,9 @@
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from .models import CustomUser
+from .utils import send_verification_email
 from api_vocabulary.models import DownloadHistory
 
 class UserMeSerializer(serializers.ModelSerializer):
@@ -63,3 +66,25 @@ class RegisterUserSerializer(serializers.ModelSerializer):
             preferred_language=validated_data.get("preferred_language", "es"),
             password=validated_data["password"]
         )
+    
+class ResendVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        User = get_user_model()
+        try:
+            user = User.objects.get(email=value)
+        except User.DoesNotExist:
+            raise ValidationError("No existe ninguna cuenta con este correo.")
+
+        if user.is_active:
+            raise ValidationError("Este correo ya ha sido verificado.")
+
+        self.context["user"] = user
+        return value
+
+    def save(self, **kwargs):
+        user = self.context["user"]
+        request = self.context["request"]
+        send_verification_email(request, user)
+        return user
