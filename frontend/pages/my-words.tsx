@@ -1,9 +1,11 @@
-// ✅ pages/my-words.tsx
+// ✅ frontend/pages/my-words.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import Navbar from "@/components/Navbar";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import VerifiedRoute from "@/components/VerifiedRoute";
 
 interface WordEntry {
   id: number;
@@ -145,112 +147,118 @@ export default function MyWordsPage() {
   );
 
   return (
-    <div className="p-8 bg-black text-white min-h-screen">
-      <Navbar />
+    <ProtectedRoute>
+      <VerifiedRoute>
+        <>
+        <div className="p-8 bg-black text-white min-h-screen">
+          <Navbar />
 
-      <h1 className="text-3xl font-bold mb-4">My Words</h1>
+          <h1 className="text-3xl font-bold mb-4">My Words</h1>
 
-      {hasOrphanWords && (
-        <div className="bg-yellow-900 text-yellow-300 p-4 rounded mb-6 border border-yellow-600">
-          ⚠️ Some words are incomplete (missing shared or custom content).
-        </div>
-      )}
+          {hasOrphanWords && (
+            <div className="bg-yellow-900 text-yellow-300 p-4 rounded mb-6 border border-yellow-600">
+              ⚠️ Some words are incomplete (missing shared or custom content).
+            </div>
+          )}
 
-      <div className="flex gap-4 mb-6">
-        <input
-          type="text"
-          placeholder="Filter by deck name"
-          value={deckFilter}
-          onChange={(e) => setDeckFilter(e.target.value)}
-          className="p-2 bg-neutral-800 text-white rounded border border-purple-500"
-        />
-        <button
-          className="bg-red-700 hover:bg-red-800 text-white px-4 rounded"
-          onClick={handleDeleteSelected}
-        >
-          Delete Selected
-        </button>
-        <button
-          className="bg-blue-700 hover:bg-blue-800 text-white px-4 rounded"
-          onClick={handleDownloadSelected}
-        >
-          Download Selected
-        </button>
-        <input
-          type="text"
-          placeholder="Name for new deck (optional)"
-          value={newDeckName}
-          onChange={(e) => setNewDeckName(e.target.value)}
-          className="p-2 bg-neutral-800 text-white rounded border border-blue-500"
-        />
-        <label className="flex items-center gap-2 text-sm text-gray-300">
-          <input
-            type="checkbox"
-            checked={allowDuplicates}
-            onChange={(e) => setAllowDuplicates(e.target.checked)}
-          />
-          Allow duplicates
-        </label>
-      </div>
+          <div className="flex gap-4 mb-6">
+            <input
+              type="text"
+              placeholder="Filter by deck name"
+              value={deckFilter}
+              onChange={(e) => setDeckFilter(e.target.value)}
+              className="p-2 bg-neutral-800 text-white rounded border border-purple-500"
+            />
+            <button
+              className="bg-red-700 hover:bg-red-800 text-white px-4 rounded"
+              onClick={handleDeleteSelected}
+            >
+              Delete Selected
+            </button>
+            <button
+              className="bg-blue-700 hover:bg-blue-800 text-white px-4 rounded"
+              onClick={handleDownloadSelected}
+            >
+              Download Selected
+            </button>
+            <input
+              type="text"
+              placeholder="Name for new deck (optional)"
+              value={newDeckName}
+              onChange={(e) => setNewDeckName(e.target.value)}
+              className="p-2 bg-neutral-800 text-white rounded border border-blue-500"
+            />
+            <label className="flex items-center gap-2 text-sm text-gray-300">
+              <input
+                type="checkbox"
+                checked={allowDuplicates}
+                onChange={(e) => setAllowDuplicates(e.target.checked)}
+              />
+              Allow duplicates
+            </label>
+          </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead className="sticky top-0 bg-black z-10">
-            <tr className="text-purple-400 border-b border-purple-700">
-              <th className="p-2">
-                <input
-                  type="checkbox"
-                  onChange={toggleSelectAll}
-                  checked={
-                    paginatedWords.length > 0 &&
-                    paginatedWords.every((entry) => selectedIds.includes(entry.id))
-                  }
-                />
-              </th>
-              <th className="p-2">Word</th>
-              <th className="p-2">Translation</th>
-              <th className="p-2">Deck</th>
-              <th className="p-2">Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedWords.map((entry) => (
-              <tr key={entry.id} className="border-b border-neutral-800">
-                <td className="p-2">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.includes(entry.id)}
-                    onChange={() => toggleSelection(entry.id)}
-                  />
-                </td>
-                <td className="p-2">{getWordText(entry)}</td>
-                <td className="p-2">{getTranslationText(entry)}</td>
-                <td className="p-2">{entry.deck}</td>
-                <td className="p-2">
-                  {new Date(entry.created_at).toLocaleDateString()}
-                </td>
-              </tr>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="sticky top-0 bg-black z-10">
+                <tr className="text-purple-400 border-b border-purple-700">
+                  <th className="p-2">
+                    <input
+                      type="checkbox"
+                      onChange={toggleSelectAll}
+                      checked={
+                        paginatedWords.length > 0 &&
+                        paginatedWords.every((entry) => selectedIds.includes(entry.id))
+                      }
+                    />
+                  </th>
+                  <th className="p-2">Word</th>
+                  <th className="p-2">Translation</th>
+                  <th className="p-2">Deck</th>
+                  <th className="p-2">Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedWords.map((entry) => (
+                  <tr key={entry.id} className="border-b border-neutral-800">
+                    <td className="p-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(entry.id)}
+                        onChange={() => toggleSelection(entry.id)}
+                      />
+                    </td>
+                    <td className="p-2">{getWordText(entry)}</td>
+                    <td className="p-2">{getTranslationText(entry)}</td>
+                    <td className="p-2">{entry.deck}</td>
+                    <td className="p-2">
+                      {new Date(entry.created_at).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex justify-center gap-2 mt-6">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-1 rounded border ${
+                  page === currentPage
+                    ? "bg-purple-700 text-white border-purple-500"
+                    : "bg-neutral-800 text-gray-300 border-neutral-700 hover:bg-neutral-700"
+                }`}
+              >
+                {page}
+              </button>
             ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex justify-center gap-2 mt-6">
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-          <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            className={`px-3 py-1 rounded border ${
-              page === currentPage
-                ? "bg-purple-700 text-white border-purple-500"
-                : "bg-neutral-800 text-gray-300 border-neutral-700 hover:bg-neutral-700"
-            }`}
-          >
-            {page}
-          </button>
-        ))}
-      </div>
-    </div>
+          </div>
+        </div>
+        </>
+      </VerifiedRoute>
+    </ProtectedRoute>
   );
 }

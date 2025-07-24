@@ -1,3 +1,4 @@
+// ✅ frontend/pages/create.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import GeneratedCard from "@/components/ui/GeneratedCard";
 import EditableTable from "@/components/ui/EditableTable";
 import Footer from "@/components/Footer";
+import VerifiedRoute from "@/components/VerifiedRoute";
 
 interface Language {
   id: number;
@@ -163,194 +165,196 @@ export default function CreatePage() {
 
   return (
     <ProtectedRoute>
-      <>
-        {toastMessage && (
-          <div className={`fixed top-6 right-6 px-4 py-2 rounded-lg shadow-lg z-50 ${
-            toastType === "success" ? "bg-green-600 text-white" : "bg-red-700 text-white"
-          }`}>
-            {toastMessage}
-          </div>
-        )}
+      <VerifiedRoute>
+        <>
+          {toastMessage && (
+            <div className={`fixed top-6 right-6 px-4 py-2 rounded-lg shadow-lg z-50 ${
+              toastType === "success" ? "bg-green-600 text-white" : "bg-red-700 text-white"
+            }`}>
+              {toastMessage}
+            </div>
+          )}
 
-        <Navbar />
-        <main className="min-h-screen bg-black text-white p-6">
-          <div className="flex flex-col lg:flex-row justify-between gap-12 items-start w-full max-w-7xl mx-auto">
-            <div className="w-full lg:w-1/2">
-              <h1 className="text-3xl font-bold mb-6">Create New Word</h1>
-              {errorMsg && (
-                <div className="bg-red-800 text-red-200 p-4 rounded mb-6">{errorMsg}</div>
+          <Navbar />
+          <main className="min-h-screen bg-black text-white p-6">
+            <div className="flex flex-col lg:flex-row justify-between gap-12 items-start w-full max-w-7xl mx-auto">
+              <div className="w-full lg:w-1/2">
+                <h1 className="text-3xl font-bold mb-6">Create New Word</h1>
+                {errorMsg && (
+                  <div className="bg-red-800 text-red-200 p-4 rounded mb-6">{errorMsg}</div>
+                )}
+
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="Enter word"
+                    value={word}
+                    onChange={(e) => setWord(e.target.value)}
+                    className="w-full p-2 rounded bg-neutral-900 border border-neutral-700"
+                  />
+
+                  <div className="flex gap-4">
+                    <select
+                      value={sourceLang}
+                      onChange={(e) => setSourceLang(Number(e.target.value))}
+                      className="w-full p-2 rounded bg-neutral-900 border border-neutral-700"
+                    >
+                      {languages.map((lang) => (
+                        <option key={lang.id} value={lang.id}>
+                          {lang.name}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={targetLang}
+                      onChange={(e) => setTargetLang(Number(e.target.value))}
+                      className="w-full p-2 rounded bg-neutral-900 border border-neutral-700"
+                    >
+                      {languages.map((lang) => (
+                        <option key={lang.id} value={lang.id}>
+                          {lang.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <textarea
+                    placeholder="Context (optional, premium only)"
+                    value={context}
+                    onChange={(e) => setContext(e.target.value)}
+                    className="w-full p-2 rounded bg-neutral-900 border border-neutral-700 min-h-[100px]"
+                  />
+
+                  <input
+                    type="text"
+                    placeholder="Deck name"
+                    value={deck}
+                    onChange={(e) => setDeck(e.target.value)}
+                    className="w-full p-2 rounded bg-neutral-900 border border-neutral-700"
+                  />
+
+                  <button
+                    onClick={handleGenerate}
+                    disabled={loading || !word}
+                    className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-white font-bold disabled:opacity-50"
+                  >
+                    {loading ? "Generating..." : "Generate"}
+                  </button>
+                </div>
+              </div>
+
+              {result && (
+                <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-end">
+                  <h2 className="text-3xl font-bold mb-6">Card Preview</h2>
+                  <GeneratedCard
+                    word={result.word}
+                    translation={result.translation}
+                    example={result.example_sentence}
+                    exampleTranslation={result.translated_sentence}
+                    imageUrl={result.image_url}
+                    audioWordUrl={result.audio_word_url}
+                    audioSentenceUrl={result.audio_sentence_url}
+                    deckName={deck}
+                    onSave={handleSave}
+                  />
+                </div>
               )}
+            </div>
 
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Enter word"
-                  value={word}
-                  onChange={(e) => setWord(e.target.value)}
-                  className="w-full p-2 rounded bg-neutral-900 border border-neutral-700"
-                />
+            {/* Divider */}
+            <div className="w-full border-t border-blue-500/40 my-12" />
 
-                <div className="flex gap-4">
-                  <select
-                    value={sourceLang}
-                    onChange={(e) => setSourceLang(Number(e.target.value))}
-                    className="w-full p-2 rounded bg-neutral-900 border border-neutral-700"
-                  >
-                    {languages.map((lang) => (
-                      <option key={lang.id} value={lang.id}>
-                        {lang.name}
-                      </option>
-                    ))}
-                  </select>
+            {/* Bulk Upload */}
+            <div className="w-full max-w-7xl mx-auto mb-16">
+              <h2 className="text-3xl font-bold mb-4">Bulk Upload (.csv)</h2>
 
-                  <select
-                    value={targetLang}
-                    onChange={(e) => setTargetLang(Number(e.target.value))}
-                    className="w-full p-2 rounded bg-neutral-900 border border-neutral-700"
-                  >
-                    {languages.map((lang) => (
-                      <option key={lang.id} value={lang.id}>
-                        {lang.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <textarea
-                  placeholder="Context (optional, premium only)"
-                  value={context}
-                  onChange={(e) => setContext(e.target.value)}
-                  className="w-full p-2 rounded bg-neutral-900 border border-neutral-700 min-h-[100px]"
-                />
-
-                <input
-                  type="text"
-                  placeholder="Deck name"
-                  value={deck}
-                  onChange={(e) => setDeck(e.target.value)}
-                  className="w-full p-2 rounded bg-neutral-900 border border-neutral-700"
-                />
-
-                <button
-                  onClick={handleGenerate}
-                  disabled={loading || !word}
-                  className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-white font-bold disabled:opacity-50"
+              <div className="flex items-center justify-between mb-6">
+                <a
+                  href="http://localhost:8010/api/bulk-upload-template/"
+                  className="text-sm text-purple-400 underline hover:text-purple-300"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  {loading ? "Generating..." : "Generate"}
-                </button>
-              </div>
-            </div>
-
-            {result && (
-              <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-end">
-                <h2 className="text-3xl font-bold mb-6">Card Preview</h2>
-                <GeneratedCard
-                  word={result.word}
-                  translation={result.translation}
-                  example={result.example_sentence}
-                  exampleTranslation={result.translated_sentence}
-                  imageUrl={result.image_url}
-                  audioWordUrl={result.audio_word_url}
-                  audioSentenceUrl={result.audio_sentence_url}
-                  deckName={deck}
-                  onSave={handleSave}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Divider */}
-          <div className="w-full border-t border-blue-500/40 my-12" />
-
-          {/* Bulk Upload */}
-          <div className="w-full max-w-7xl mx-auto mb-16">
-            <h2 className="text-3xl font-bold mb-4">Bulk Upload (.csv)</h2>
-
-            <div className="flex items-center justify-between mb-6">
-              <a
-                href="http://localhost:8010/api/bulk-upload-template/"
-                className="text-sm text-purple-400 underline hover:text-purple-300"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                📄 Descargar plantilla .csv
-              </a>
-              <span className="text-sm text-neutral-500">
-                Máximo 50 palabras por archivo
-              </span>
-            </div>
-
-            <div
-              className="w-full p-10 border-2 border-dashed border-purple-500/40 rounded-xl text-center bg-neutral-900 text-neutral-300 hover:border-purple-500 transition cursor-pointer"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const file = e.dataTransfer.files?.[0];
-                if (file && file.name.endsWith(".csv")) {
-                  handleCSVSelect(file);
-                } else {
-                  showToast("❌ Solo se permiten archivos .csv", "error");
-                }
-              }}
-              onClick={() => document.getElementById("csvInput")?.click()}
-            >
-              <p className="text-lg">Arrastra tu archivo .csv aquí o haz clic para seleccionarlo</p>
-              <p className="text-sm text-neutral-500 mt-2">
-                Encabezados: word, source_lang_code, target_lang_code, deck
-              </p>
-            </div>
-
-            <input
-              id="csvInput"
-              type="file"
-              accept=".csv"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file && file.name.endsWith(".csv")) {
-                  handleCSVSelect(file);
-                } else {
-                  showToast("❌ Solo se permiten archivos .csv", "error");
-                }
-              }}
-            />
-            {selectedCSV && (
-              <div className="mt-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <span className="text-sm text-green-400">
-                  📁 {selectedCSV.name} listo para subir.
+                  📄 Descargar plantilla .csv
+                </a>
+                <span className="text-sm text-neutral-500">
+                  Máximo 50 palabras por archivo
                 </span>
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleCSVUpload}
-                    className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-white font-bold"
-                  >
-                    Procesar archivo
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedCSV(null);
-                      showToast("Archivo descartado.", "error");
-                    }}
-                    className="bg-red-700 hover:bg-red-800 px-4 py-2 rounded text-white font-bold"
-                  >
-                    ❌ Quitar archivo
-                  </button>
-                </div>
               </div>
-            )}
-          </div>
 
-          {/* Divider */}
-          <div className="w-full border-t border-blue-500/40 my-12" />
+              <div
+                className="w-full p-10 border-2 border-dashed border-purple-500/40 rounded-xl text-center bg-neutral-900 text-neutral-300 hover:border-purple-500 transition cursor-pointer"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files?.[0];
+                  if (file && file.name.endsWith(".csv")) {
+                    handleCSVSelect(file);
+                  } else {
+                    showToast("❌ Solo se permiten archivos .csv", "error");
+                  }
+                }}
+                onClick={() => document.getElementById("csvInput")?.click()}
+              >
+                <p className="text-lg">Arrastra tu archivo .csv aquí o haz clic para seleccionarlo</p>
+                <p className="text-sm text-neutral-500 mt-2">
+                  Encabezados: word, source_lang_code, target_lang_code, deck
+                </p>
+              </div>
 
-          {/* Manual Upload Excel Style */}
-          <div className="w-full max-w-7xl mx-auto mb-12">
-            <h2 className="text-3xl font-bold mb-4 text-white">Manual Upload</h2>
-            <EditableTable languages={languages} />
-          </div>
-        </main>
-        <Footer />
-      </>
+              <input
+                id="csvInput"
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file && file.name.endsWith(".csv")) {
+                    handleCSVSelect(file);
+                  } else {
+                    showToast("❌ Solo se permiten archivos .csv", "error");
+                  }
+                }}
+              />
+              {selectedCSV && (
+                <div className="mt-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                  <span className="text-sm text-green-400">
+                    📁 {selectedCSV.name} listo para subir.
+                  </span>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleCSVUpload}
+                      className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-white font-bold"
+                    >
+                      Procesar archivo
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedCSV(null);
+                        showToast("Archivo descartado.", "error");
+                      }}
+                      className="bg-red-700 hover:bg-red-800 px-4 py-2 rounded text-white font-bold"
+                    >
+                      ❌ Quitar archivo
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="w-full border-t border-blue-500/40 my-12" />
+
+            {/* Manual Upload Excel Style */}
+            <div className="w-full max-w-7xl mx-auto mb-12">
+              <h2 className="text-3xl font-bold mb-4 text-white">Manual Upload</h2>
+              <EditableTable languages={languages} />
+            </div>
+          </main>
+          <Footer />
+        </>
+      </VerifiedRoute>
     </ProtectedRoute>
   );
 }

@@ -11,6 +11,7 @@ import DownloadHistory from '@/components/MyAccount/DownloadHistory';
 import DeleteAccountSection from '@/components/MyAccount/DeleteAccountSection';
 import Navbar from '@/components/Navbar';
 import Footer from "@/components/Footer";
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function MyAccountPage() {
   const {
@@ -52,30 +53,32 @@ export default function MyAccountPage() {
   if (error || !data) return <p className="text-red-500 text-center">Error loading your profile.</p>;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0d0d0d] to-[#1a1a1a] text-white">
-      <Navbar />
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-[#0d0d0d] to-[#1a1a1a] text-white">
+        <Navbar />
 
-      <div className="max-w-4xl mx-auto p-4 space-y-10">
-        <h1 className="text-4xl font-extrabold mb-10 text-white">My Account</h1>
+        <div className="max-w-4xl mx-auto p-4 space-y-10">
+          <h1 className="text-4xl font-extrabold mb-10 text-white">My Account</h1>
 
-        <section className="grid md:grid-cols-2 gap-6 items-start">
-          <ProfileCard user={data} refetch={refetch} />
-          <EditProfileForm user={data} refetch={refetch} />
-        </section>
+          <section className="grid md:grid-cols-2 gap-6 items-start">
+            <ProfileCard user={data} refetch={refetch} />
+            <EditProfileForm user={data} refetch={refetch} />
+          </section>
 
-        <section>
-          <ChangePasswordForm />
-        </section>
+          <section>
+            <ChangePasswordForm />
+          </section>
 
-        <section>
-          <DownloadHistory />
-        </section>
+          <section>
+            <DownloadHistory />
+          </section>
 
-        <section>
-          <DeleteAccountSection />
-        </section>
+          <section>
+            <DeleteAccountSection />
+          </section>
+        </div>
+        <Footer />
       </div>
-      <Footer />
-    </div>
+    </ProtectedRoute>
   );
 }
