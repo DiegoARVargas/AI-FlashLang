@@ -4,7 +4,7 @@ from django.http import FileResponse, Http404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.http import HttpResponse
-from rest_framework.permissions import IsAuthenticated
+from .permissions import IsAuthenticatedAndVerified
 from rest_framework.parsers import MultiPartParser
 from django.db.models import Q
 from .models import UserVocabularyWord, SharedVocabularyWord, CustomWordContent, Language
@@ -22,11 +22,12 @@ from .anki_exporter import generate_apkg_for_user
 class LanguageViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Language.objects.all()
     serializer_class = LanguageSerializer
+    permission_classes = [IsAuthenticatedAndVerified]
 
 class UserVocabularyWordViewSet(viewsets.ModelViewSet):
     queryset = UserVocabularyWord.objects.none()
     serializer_class = UserVocabularyWordSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
 
     def get_queryset(self):
         user = self.request.user
@@ -248,7 +249,7 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
 
         return example_sentence, translation
     
-    @action(detail=False, methods=['get', 'post'], url_path='download-apkg', permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['get', 'post'], url_path='download-apkg', permission_classes=[IsAuthenticatedAndVerified])
     def download_apkg(self, request):
         user = request.user
         deck_name = request.query_params.get("deck_name", "").strip() or request.data.get("deck_name", "").strip()  # capturar desde la URL
@@ -272,7 +273,7 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class GenerateAudioView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
 
     def post(self, request, *args, **kwargs):
         word_id = request.data.get("word_id")
@@ -296,7 +297,7 @@ class GenerateAudioView(APIView):
         
 class BulkUploadView(APIView):
     parser_classes = [MultiPartParser]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
 
     def post(self, request):
         uploaded_file = request.FILES.get('file')
@@ -385,7 +386,7 @@ class BulkUploadView(APIView):
         }, status=status.HTTP_207_MULTI_STATUS)
     
 class BulkUploadTemplateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedAndVerified]
 
     def get(self, request):
         # Encabezados esperados por el sistema
