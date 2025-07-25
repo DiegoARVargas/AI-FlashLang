@@ -11,7 +11,7 @@ from .models import UserVocabularyWord, SharedVocabularyWord, CustomWordContent,
 from .serializers import UserVocabularyWordSerializer, LanguageSerializer
 from django.db import IntegrityError, transaction
 from openai import OpenAI
-import os, io, csv
+import os, io, csv, sys
 import re
 from google.cloud import translate_v2 as gcloud_translate
 #from deep_translator import GoogleTranslator
@@ -48,6 +48,7 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
+        print("[LOG] perform_create ejecutado", file=sys.stderr)    # Debugging line
         validated = serializer.validated_data
         user = self.request.user
 
