@@ -44,7 +44,7 @@ export default function CreatePage() {
     const fetchLanguages = async () => {
       try {
         const token = Cookies.get("access_token");
-        const res = await fetch("http://localhost:8010/api/languages/", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}languages/`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
