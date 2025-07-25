@@ -125,6 +125,7 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
         return result['translatedText']
 
     def generate_content_for_shared(self, shared):
+        print(f"[LOG] Generando contenido para palabra compartida: {shared.word}") # Debugging line
         prompt = (
             f"You are an AI assistant helping users learn vocabulary through example sentences and direct translations.\n\n"
             f"Your task is to generate the following for the word **'{shared.word}'** in the source language **'{shared.source_lang.name}'**:\n\n"
@@ -143,6 +144,7 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
         )
 
         client = self.get_openai_client()
+        print("[LOG] Llamando a OpenAI...") # Debugging line
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -150,27 +152,37 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
                 {"role": "user", "content": prompt}
             ]
         )
+        print("[LOG] Respuesta de OpenAI recibida") # Debugging line
 
         content = response.choices[0].message.content.strip()
+        print(f"[LOG] Contenido generado por OpenAI: {content}") # Debugging line
+
         example_sentence, translation = self.extract_response_data(content)
+        print(f"[LOG] Frase extraída: {example_sentence}")  # Debugging line
+        print(f"[LOG] Traducción extraída: {translation}")  # Debugging line
 
         if not example_sentence or not translation:
             raise Exception(f"No se pudo extraer contenido de OpenAI. Respuesta: {content}")
 
+        print("[LOG] Traduciendo frase con Google Translate...")    # Debugging line      
         translated_sentence = self.translate_with_google_cloud(
             example_sentence, shared.source_lang.code, shared.target_lang.code
         )
+        print(f"[LOG] Traducción generada: {translated_sentence}")  # Debugging line
 
         shared.translation = translation
         shared.example_sentence = example_sentence
         shared.example_translation = translated_sentence
 
         # Generar audios
+        print("[LOG] Generando audio de palabra y frase...")    # Debugging line
         generate_gtts_audio_for_word(shared)
         generate_gtts_audio_for_sentence(shared)
         shared.save()
+        print(f"[LOG] Proceso finalizado para: {shared.word}")  # Debugging line
 
     def generate_content_for_custom(self, custom):
+        print(f"[LOG] Generando contenido para palabra personalizada: {custom.word} con contexto: {custom.context}")    # Debugging line
         prompt = (
             f"You are an AI assistant helping users learn vocabulary through example sentences and direct translations.\n\n"
             f"Your task is to generate the following for the word **'{custom.word}'** in the source language **'{custom.source_lang.name}'**, "
@@ -190,6 +202,7 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
         )
 
         client = self.get_openai_client()
+        print("[LOG] Llamando a OpenAI...") # Debugging line
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -197,18 +210,31 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
                 {"role": "user", "content": prompt}
             ]
         )
+        print("[LOG] Respuesta de OpenAI recibida") # Debugging line
+
         content = response.choices[0].message.content.strip()
+        print(f"[LOG] Contenido generado por OpenAI: {content}") # Debugging line
+        
         example_sentence, translation = self.extract_response_data(content)
+        print(f"[LOG] Frase extraída: {example_sentence}")  # Debugging line
+        print(f"[LOG] Traducción extraída: {translation}")  # Debugging line
+
+        print("[LOG] Traduciendo frase con Google Translate...")    # Debugging line
         translated_sentence = self.translate_with_google_cloud(
             example_sentence, custom.source_lang.code, custom.target_lang.code
         )
+        print(f"[LOG] Traducción generada: {translated_sentence}")  # Debugging line
 
         custom.translation = translation
         custom.example_sentence = example_sentence
         custom.example_translation = translated_sentence
+
+        print("[LOG] Generando audio de palabra y frase...")    # Debugging line
         generate_gtts_audio_for_word(custom)
         generate_gtts_audio_for_sentence(custom)
+
         custom.save()
+        print(f"[LOG] Proceso finalizado para: {custom.word}")  # Debugging line
 
     def extract_response_data(self, content):
         """
@@ -239,6 +265,7 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
         # ⚠️ Validación: evitar que la traducción sea una oración completa
         # Si contiene más de 6 palabras o termina en punto, algo anda mal
         if len(translation.split()) > 6 or translation.endswith("."):
+            print(f"[ERROR] Traducción inválida: '{translation}'")  # Debugging line
             raise Exception(f"La traducción parece ser una oración completa: '{translation}'")
 
         # Corrección de formato duplicado: "piña (v.) piña"
