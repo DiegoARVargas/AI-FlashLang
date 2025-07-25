@@ -74,7 +74,7 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
     const newRows = await Promise.all(
       rows.map(async (row) => {
         try {
-          const response = await fetch("http://localhost:8010/api/vocabulary/", {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}vocabulary/`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -122,7 +122,7 @@ export default function EditableTable({ languages }: { languages: Language[] }) 
 
     try {
       const token = Cookies.get("access_token");
-      const response = await fetch("http://localhost:8010/api/vocabulary/download-apkg/", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}vocabulary/download-apkg/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

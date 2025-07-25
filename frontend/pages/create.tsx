@@ -67,7 +67,7 @@ export default function CreatePage() {
     setErrorMsg(null);
     try {
       const token = Cookies.get("access_token");
-      const res = await fetch("http://localhost:8010/api/vocabulary/", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}vocabulary/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -131,7 +131,7 @@ export default function CreatePage() {
     formData.append("file", selectedCSV);
 
     try {
-      const res = await fetch("http://localhost:8010/api/bulk-upload-vocabulary/", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}bulk-upload-vocabulary/`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -271,7 +271,7 @@ export default function CreatePage() {
 
               <div className="flex items-center justify-between mb-6">
                 <a
-                  href="http://localhost:8010/api/bulk-upload-template/"
+                  href={`${process.env.NEXT_PUBLIC_BACKEND_URL}bulk-upload-template/`}
                   className="text-sm text-purple-400 underline hover:text-purple-300"
                   target="_blank"
                   rel="noopener noreferrer"

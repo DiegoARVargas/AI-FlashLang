@@ -33,7 +33,7 @@ export default function MyWordsPage() {
   useEffect(() => {
     const fetchWords = async () => {
       const token = Cookies.get("access_token");
-      const res = await fetch("http://localhost:8010/api/vocabulary/", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}vocabulary/`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -69,7 +69,7 @@ export default function MyWordsPage() {
     const token = Cookies.get("access_token");
     await Promise.all(
       selectedIds.map((id) =>
-        fetch(`http://localhost:8010/api/vocabulary/${id}/`, {
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}vocabulary/${id}/`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -91,7 +91,7 @@ export default function MyWordsPage() {
       filename = `aiflashlang_${newDeckName.trim()}.apkg`;
     }
 
-    const res = await fetch("http://localhost:8010/api/vocabulary/download-apkg/", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}vocabulary/download-apkg/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

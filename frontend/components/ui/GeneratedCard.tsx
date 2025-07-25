@@ -36,7 +36,7 @@ export default function GeneratedCard({
       setDownloading(true);
       const token = Cookies.get("access_token");
 
-      const url = `http://localhost:8010/api/vocabulary/download-apkg/?deck_name=${encodeURIComponent(deckName)}`;
+      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}vocabulary/download-apkg/?deck_name=${encodeURIComponent(deckName)}`;
 
       const response = await fetch(url, {
         method: "GET",
