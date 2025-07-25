@@ -69,6 +69,7 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
 
         # 🧠 Premium: con contexto → flujo Custom
         if context:
+            print("[FLOW] Generación personalizada activada", file=sys.stderr)  # Debugging line
             # Verifica si ya existe este custom exacto
             if CustomWordContent.objects.filter(
                 word=word,
@@ -91,6 +92,7 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
             serializer.save(user=user, custom_content=custom)
 
         else:
+            print("[FLOW] Generación compartida activada", file=sys.stderr)  # Debugging line
             # 🔄 Reutilizable: flujo compartido (Shared)
             shared = SharedVocabularyWord.objects.filter(
                 word=word,
@@ -117,7 +119,9 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
     def get_openai_client(self):
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
+            print("[ERROR] Falta OPENAI_API_KEY", file=sys.stderr)  # Debugging line
             raise Exception("La API Key de OpenAI no está definida en las variables de entorno.")
+        print("[OK] OPENAI_API_KEY encontrada", file=sys.stderr)    # Debugging line
         return OpenAI(api_key=api_key)
     
     def translate_with_google_cloud(self, text, source_lang, target_lang):
@@ -179,6 +183,7 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
         print("[LOG] Generando audio de palabra y frase...", file=sys.stderr)    # Debugging line
         generate_gtts_audio_for_word(shared)
         generate_gtts_audio_for_sentence(shared)
+        print("[CHECK] ¿Realmente llegamos al final de generate_content_for_shared?", file=sys.stderr)  # Debugging line
         shared.save()
         print(f"[LOG] Proceso finalizado para: {shared.word}",file=sys.stderr)  # Debugging line
 
