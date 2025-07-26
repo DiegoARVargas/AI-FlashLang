@@ -125,9 +125,16 @@ class UserVocabularyWordViewSet(viewsets.ModelViewSet):
         return OpenAI(api_key=api_key)
     
     def translate_with_google_cloud(self, text, source_lang, target_lang):
-        client = gcloud_translate.Client()
-        result = client.translate(text, source_language=source_lang, target_language=target_lang)
-        return result['translatedText']
+        print(f"[LOG] Traduciendo con Google Cloud: '{text}' ({source_lang} → {target_lang})", file=sys.stderr)
+        try:
+            client = gcloud_translate.Client()
+            result = client.translate(text, source_language=source_lang, target_language=target_lang)
+            print(f"[LOG] Resultado de traducción: {result}", file=sys.stderr)
+            return result['translatedText']
+        except Exception as e:
+            print(f"[ERROR] Fallo en Google Translate: {str(e)}", file=sys.stderr)
+            raise
+
 
     def generate_content_for_shared(self, shared):
         print(f"[LOG] Generando contenido para palabra compartida: {shared.word}", file=sys.stderr) # Debugging line
