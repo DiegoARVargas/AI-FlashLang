@@ -13,7 +13,7 @@ from .utils import send_verification_email
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .token_serializers import CustomTokenObtainPairSerializer
 from django.shortcuts import redirect
-import os
+import os, sys
 
 class UserMeView(APIView):
     permission_classes = [IsAuthenticated]
@@ -74,7 +74,10 @@ class RegisterUserView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        send_verification_email(request, user)
+        try:
+            send_verification_email(request, user)
+        except Exception as e:
+            print(f"[ERROR] Fallo al enviar el correo de verificación: {e}", file=sys.stderr)
 
         refresh = RefreshToken.for_user(user)
         return Response({
