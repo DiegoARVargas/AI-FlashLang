@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Verifica tu correo | FlashLang</title>
+    <title>Verify Your Email | FlashLang</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -46,18 +46,18 @@
         <h2>🔡 FlashLang</h2>
     </div>
 
-    <p>Hola {{ user.display_name|default:user.email }},</p>
+    <p>Hello {{ user.display_name|default:user.email }},</p>
 
-    <p>¡Gracias por registrarte en <strong>AI FlashLang</strong>! Para comenzar a usar la plataforma, por favor verifica tu dirección de correo electrónico haciendo clic en el siguiente botón:</p>
+    <p>Thank you for signing up for <strong>AI FlashLang</strong>! To start using the platform, please verify your email address by clicking the button below:</p>
 
     <p style="text-align: center;">
-        <a href="{{ verification_link }}" class="button">Verificar correo</a>
+        <a href="{{ verification_link }}" class="button">Verify Email</a>
     </p>
 
-    <p>Si tú no creaste esta cuenta, simplemente ignora este mensaje.</p>
+    <p>If you did not create this account, you can safely ignore this message.</p>
 
     <div class="footer">
-        &copy; {{ current_year|default:"2025" }} FlashLang. Todos los derechos reservados.
+        &copy; {{ current_year|default:"2025" }} FlashLang. All rights reserved.
     </div>
 </div>
 </body>
