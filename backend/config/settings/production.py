@@ -3,7 +3,7 @@ from .base import *
 DEBUG = False
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
-MEDIA_ROOT = "app/media"
+# MEDIA_ROOT = "app/media" # desactivado en produccion ya que render no soporta almacenamiento de archivos. ahora usamos AWS S3
 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
