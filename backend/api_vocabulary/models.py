@@ -1,6 +1,9 @@
 from django.db import models
 from django.conf import settings
 
+if not settings.DEBUG:
+    from config.storages import MediaStorage
+
 class Language(models.Model):
     code = models.CharField(max_length=10, unique=True)  # ej: "en", "es", "fr"
     name = models.CharField(max_length=100)  # ej: "English", "Español", "Français"
@@ -15,8 +18,18 @@ class SharedVocabularyWord(models.Model):
     translation = models.CharField(max_length=255)
     example_sentence = models.TextField()
     example_translation = models.TextField()
-    audio_word = models.FileField(upload_to="audio/", blank=True, null=True)
-    audio_sentence = models.FileField(upload_to="audio/", blank=True, null=True)
+    audio_word = models.FileField(
+        upload_to="audio/",
+        blank=True,
+        null=True,
+        storage=MediaStorage() if not settings.DEBUG else None
+    )
+    audio_sentence = models.FileField(
+        upload_to="audio/",
+        blank=True,
+        null=True,
+        storage=MediaStorage() if not settings.DEBUG else None
+    )
     image_url = models.CharField(max_length=500, blank=True, null=True)
 
     class Meta:
@@ -92,8 +105,18 @@ class CustomWordContent(models.Model):
     translation = models.CharField(max_length=255, blank=True, null=True)
     example_sentence = models.TextField(blank=True, null=True)
     example_translation = models.TextField(blank=True, null=True)
-    audio_word = models.FileField(upload_to="audio/", blank=True, null=True)
-    audio_sentence = models.FileField(upload_to="audio/", blank=True, null=True)
+    audio_word = models.FileField(
+        upload_to="audio/",
+        blank=True,
+        null=True,
+        storage=MediaStorage() if not settings.DEBUG else None
+    )
+    audio_sentence = models.FileField(
+        upload_to="audio/",
+        blank=True,
+        null=True,
+        storage=MediaStorage() if not settings.DEBUG else None
+    )
     image_url = models.CharField(max_length=500, blank=True, null=True)
 
     class Meta:
