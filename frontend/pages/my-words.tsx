@@ -1,4 +1,4 @@
-// ✅ frontend/pages/my-words.tsx (modificado para deck_name dinámico por selección)
+// ✅ frontend/pages/my-words.tsx (mejora dinámica de deck + restauración botón delete)
 "use client";
 
 import { useEffect, useState } from "react";
@@ -25,9 +25,8 @@ export default function MyWordsPage() {
   const [words, setWords] = useState<WordEntry[]>([]);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [deckFilter, setDeckFilter] = useState<string>("");
-  const [newDeckName, setNewDeckName] = useState<string>("");
   const [allowDuplicates, setAllowDuplicates] = useState<boolean>(false);
-  const [currentPage, setCurrentPage] = useState<number>(1); // ✅ Restaurado
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 20;
 
   useEffect(() => {
@@ -59,6 +58,26 @@ export default function MyWordsPage() {
       const newIds = visibleIds.filter((id) => !selectedIds.includes(id));
       setSelectedIds((prev) => [...prev, ...newIds]);
     }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (!selectedIds.length) return;
+    const confirmed = confirm("⚠️ Are you sure you want to delete the selected words?");
+    if (!confirmed) return;
+
+    const token = Cookies.get("access_token");
+    await Promise.all(
+      selectedIds.map((id) =>
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}vocabulary/${id}/`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+      )
+    );
+    setWords((prev) => prev.filter((entry) => !selectedIds.includes(entry.id)));
+    setSelectedIds([]);
   };
 
   const handleDownloadSelected = async () => {
@@ -152,6 +171,12 @@ export default function MyWordsPage() {
           )}
 
           <div className="flex gap-4 mb-6">
+            <button
+              className="bg-red-700 hover:bg-red-800 text-white px-4 rounded"
+              onClick={handleDeleteSelected}
+            >
+              Delete Selected
+            </button>
             <input
               type="text"
               placeholder="Filter by deck name"
@@ -159,6 +184,12 @@ export default function MyWordsPage() {
               onChange={(e) => setDeckFilter(e.target.value)}
               className="p-2 bg-neutral-800 text-white rounded border border-purple-500"
             />
+            <button
+              className="bg-red-700 hover:bg-red-800 text-white px-4 rounded"
+              onClick={handleDeleteSelected}
+            >
+              Delete Selected
+            </button>
             <button
               className="bg-blue-700 hover:bg-blue-800 text-white px-4 rounded"
               onClick={handleDownloadSelected}
