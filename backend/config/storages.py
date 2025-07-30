@@ -8,3 +8,9 @@ class MediaStorage(S3Boto3Storage):
     default_acl = None  # No usaremos ACLs (obligatorio si el bucket tiene Ownership Enforced)
     file_overwrite = True  # Sobrescribe si ya existe
     custom_domain = settings.AWS_S3_CUSTOM_DOMAIN
+
+class AvatarStorage(S3Boto3Storage):
+    location = "avatars"
+    default_acl = "public-read"  # Esto hará que las imágenes sean accesibles desde el frontend
+    file_overwrite = True
+    custom_domain = settings.AWS_S3_CUSTOM_DOMAIN

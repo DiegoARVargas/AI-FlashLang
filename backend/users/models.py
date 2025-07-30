@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
+from config.storages import AvatarStorage
 
 
 class CustomUserManager(BaseUserManager):
@@ -40,7 +41,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         ],
         default="es",
     )
-    avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
+    avatar = models.ImageField(
+        upload_to="avatars/",
+        storage=AvatarStorage(),
+        null=True,
+        blank=True
+    )
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     is_premium = models.BooleanField(default=False)
