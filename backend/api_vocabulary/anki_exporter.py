@@ -95,10 +95,11 @@ def generate_apkg_for_user(user, deck_name=None, ids=None, allow_duplicates=Fals
             if f and os.path.exists(f.path):
                 media_files.append(f.path)
 
+    ''' Comentaremos este fragmento de codigo ya que no es necesario por ahora en produccion
     # Agregar imagen decorativa si existe
     flashy_path = os.path.join(settings.MEDIA_ROOT, "anki_assets", "__flashy.png")
     if os.path.exists(flashy_path):
-        media_files.append(flashy_path)
+        media_files.append(flashy_path)'''
 
     # Crear el archivo final
     genanki.Package(deck, media_files=media_files).write_to_file(output_path)
