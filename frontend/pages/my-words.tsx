@@ -171,12 +171,6 @@ export default function MyWordsPage() {
           )}
 
           <div className="flex gap-4 mb-6">
-            <button
-              className="bg-red-700 hover:bg-red-800 text-white px-4 rounded"
-              onClick={handleDeleteSelected}
-            >
-              Delete Selected
-            </button>
             <input
               type="text"
               placeholder="Filter by deck name"
