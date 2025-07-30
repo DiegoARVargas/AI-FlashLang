@@ -1,4 +1,4 @@
-// ✅ frontend/pages/my-words.tsx
+// ✅ frontend/pages/my-words.tsx (modificado para deck_name dinámico por selección)
 "use client";
 
 import { useEffect, useState } from "react";
@@ -25,9 +25,9 @@ export default function MyWordsPage() {
   const [words, setWords] = useState<WordEntry[]>([]);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [deckFilter, setDeckFilter] = useState<string>("");
-  const [currentPage, setCurrentPage] = useState(1);
   const [newDeckName, setNewDeckName] = useState<string>("");
   const [allowDuplicates, setAllowDuplicates] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1); // ✅ Restaurado
   const itemsPerPage = 20;
 
   useEffect(() => {
@@ -61,35 +61,26 @@ export default function MyWordsPage() {
     }
   };
 
-  const handleDeleteSelected = async () => {
-    if (!selectedIds.length) return;
-    const confirmed = confirm("⚠️ Are you sure you want to delete the selected words?");
-    if (!confirmed) return;
-
-    const token = Cookies.get("access_token");
-    await Promise.all(
-      selectedIds.map((id) =>
-        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}vocabulary/${id}/`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-      )
-    );
-    setWords((prev) => prev.filter((entry) => !selectedIds.includes(entry.id)));
-    setSelectedIds([]);
-  };
-
   const handleDownloadSelected = async () => {
     if (!selectedIds.length) return;
 
-    const token = Cookies.get("access_token");
-    let filename = "aiflashlang_custom.apkg";
+    const selectedWords = words.filter((entry) => selectedIds.includes(entry.id));
+    const uniqueDecks = new Set(selectedWords.map((entry) => entry.deck.trim()));
 
-    if (newDeckName.trim()) {
-      filename = `aiflashlang_${newDeckName.trim()}.apkg`;
+    let finalDeckName = "custom";
+
+    if (uniqueDecks.size === 1) {
+      finalDeckName = [...uniqueDecks][0] || "custom";
+    } else {
+      const userInput = prompt(
+        "You selected words from multiple decks. Please enter a name for the new deck:",
+        ""
+      );
+      finalDeckName = userInput?.trim() || "custom";
     }
+
+    const token = Cookies.get("access_token");
+    const filename = `aiflashlang_${finalDeckName}.apkg`;
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}vocabulary/download-apkg/`, {
       method: "POST",
@@ -97,9 +88,9 @@ export default function MyWordsPage() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ 
-        ids: selectedIds, 
-        deck_name: newDeckName.trim() || "custom",
+      body: JSON.stringify({
+        ids: selectedIds,
+        deck_name: finalDeckName,
         allow_duplicates: allowDuplicates,
       }),
     });
@@ -149,7 +140,6 @@ export default function MyWordsPage() {
   return (
     <ProtectedRoute>
       <VerifiedRoute>
-        <>
         <div className="p-8 bg-black text-white min-h-screen">
           <Navbar />
 
@@ -170,24 +160,11 @@ export default function MyWordsPage() {
               className="p-2 bg-neutral-800 text-white rounded border border-purple-500"
             />
             <button
-              className="bg-red-700 hover:bg-red-800 text-white px-4 rounded"
-              onClick={handleDeleteSelected}
-            >
-              Delete Selected
-            </button>
-            <button
               className="bg-blue-700 hover:bg-blue-800 text-white px-4 rounded"
               onClick={handleDownloadSelected}
             >
               Download Selected
             </button>
-            <input
-              type="text"
-              placeholder="Name for new deck (optional)"
-              value={newDeckName}
-              onChange={(e) => setNewDeckName(e.target.value)}
-              className="p-2 bg-neutral-800 text-white rounded border border-blue-500"
-            />
             <label className="flex items-center gap-2 text-sm text-gray-300">
               <input
                 type="checkbox"
@@ -257,7 +234,6 @@ export default function MyWordsPage() {
             ))}
           </div>
         </div>
-        </>
       </VerifiedRoute>
     </ProtectedRoute>
   );
