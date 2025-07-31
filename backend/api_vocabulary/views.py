@@ -17,6 +17,7 @@ from google.cloud import translate_v2 as gcloud_translate
 #from deep_translator import GoogleTranslator
 from .audio_utils import generate_gtts_audio_for_word, generate_gtts_audio_for_sentence
 from .anki_exporter import generate_apkg_for_user
+from rest_framework.permissions import AllowAny
 
 
 class LanguageViewSet(viewsets.ReadOnlyModelViewSet):
@@ -426,7 +427,7 @@ class BulkUploadView(APIView):
         }, status=status.HTTP_207_MULTI_STATUS)
     
 class BulkUploadTemplateView(APIView):
-    permission_classes = [IsAuthenticatedAndVerified]
+    permission_classes = [AllowAny]  # Permitir acceso sin autenticación
 
     def get(self, request):
         # Encabezados esperados por el sistema
